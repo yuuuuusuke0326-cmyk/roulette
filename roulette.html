@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="チーム分けルーレット">
+<title>チーム分けルーレット</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    background: #fff8f0;
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+
+  @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-10px) rotate(5deg)} }
+  @keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+  .header {
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    padding: 1.25rem 1rem 1.5rem;
+    text-align: center;
+    border-radius: 0 0 24px 24px;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 4px 16px rgba(249,115,22,0.25);
+  }
+
+  .header h1 {
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+
+  .header p {
+    color: rgba(255,255,255,0.85);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .wrap {
+    padding: 0 1rem;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .ball-area {
+    position: relative;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .big-ball {
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    animation: float 3s ease-in-out infinite;
+    border: 5px solid rgba(255,255,255,0.6);
+    box-shadow: 0 8px 24px rgba(249,115,22,0.35), inset 0 -6px 16px rgba(0,0,0,0.1);
+    cursor: default;
+    transition: transform 0.2s;
+  }
+
+  .big-ball.spinning {
+    animation: spin 0.25s linear infinite;
+  }
+
+  .big-ball.bouncing {
+    animation: bounce 0.4s ease 4, float 3s ease-in-out 1.6s infinite;
+  }
+
+  .star {
+    position: absolute;
+    font-size: 22px;
+    animation: float 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .star:nth-child(1){top:8px;left:28px;animation-delay:0s}
+  .star:nth-child(2){top:4px;right:36px;animation-delay:0.4s}
+  .star:nth-child(3){bottom:12px;left:18px;animation-delay:0.8s}
+  .star:nth-child(4){bottom:8px;right:22px;animation-delay:1.2s}
+
+  .subtitle {
+    text-align: center;
+    font-size: 15px;
+    color: #b45309;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    min-height: 22px;
+    letter-spacing: 0.5px;
+  }
+
+  .members-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1.5px solid #fed7aa;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .members-label {
+    font-size: 12px;
+    color: #9a3412;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .count-badge {
+    background: #f97316;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .member-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    animation: pop 0.3s ease;
+  }
+
+  .btn-start {
+    width: 100%;
+    padding: 18px;
+    font-size: 20px;
+    font-weight: 700;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    color: white;
+    margin-bottom: 0.75rem;
+    transition: transform 0.1s, box-shadow 0.1s;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 16px rgba(249,115,22,0.4);
+  }
+  .btn-start:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(249,115,22,0.3); }
+  .btn-start:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-start.pulse { animation: pulse 0.6s ease infinite; }
+
+  .loading-msg {
+    text-align: center;
+    font-size: 14px;
+    color: #b45309;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    min-height: 20px;
+  }
+
+  .result-area {
+    display: none;
+  }
+  .result-area.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .result-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #dc2626;
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+  }
+
+  .team-card {
+    border-radius: 16px;
+    padding: 1rem 1rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .team-a {
+    background: #fff1f2;
+    border: 2px solid #fca5a5;
+  }
+
+  .team-b {
+    background: #eff6ff;
+    border: 2px solid #93c5fd;
+  }
+
+  .team-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .team-a .team-title { color: #dc2626; }
+  .team-b .team-title { color: #2563eb; }
+
+  .team-count {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+  }
+
+  .team-a .team-count { background: #fee2e2; color: #991b1b; }
+  .team-b .team-count { background: #dbeafe; color: #1e40af; }
+
+  .team-members {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .team-chip {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 20px;
+    animation: pop 0.4s ease;
+  }
+
+  .team-a .team-chip {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #fca5a5;
+  }
+
+  .team-b .team-chip {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1.5px solid #93c5fd;
+  }
+
+  .btn-reset {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 50px;
+    border: 2.5px solid #f97316;
+    cursor: pointer;
+    background: white;
+    color: #f97316;
+    margin-top: 0.5rem;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+  .btn-reset:active { background: #fff7ed; transform: scale(0.97); }
+
+  .confetti-wrap {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 9999;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    top: -20px;
+    animation: confetti-fall linear forwards;
+  }
+
+  .error-msg {
+    text-align: center;
+    color: #dc2626;
+    font-size: 13px;
+    padding: 0.75rem;
+    background: #fff1f2;
+    border-radius: 12px;
+    border: 1px solid #fca5a5;
+    margin-bottom: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<div class="header">
+  <h1>⚽ チーム分けルーレット ⚽</h1>
+  <p>みんなでチームを決めよう！</p>
+</div>
+
+<div class="wrap">
+
+  <div class="ball-area">
+    <span class="star">⭐</span>
+    <span class="star">🌟</span>
+    <span class="star">✨</span>
+    <span class="star">💫</span>
+    <div class="big-ball" id="big-ball">⚽</div>
+  </div>
+
+  <p class="subtitle" id="subtitle">ボタンを押してチームを決めよう！</p>
+
+  <div class="members-card" id="members-card" style="display:none">
+    <p class="members-label">
+      👦 参加メンバー
+      <span class="count-badge" id="member-count">0</span>
+    </p>
+    <div class="member-chips" id="member-chips"></div>
+  </div>
+
+  <p class="loading-msg" id="loading-msg">メンバーを読み込み中...</p>
+  <div id="error-area"></div>
+
+  <button class="btn-start" id="btn-start" onclick="startRoulette()" disabled>🎯 スタート！</button>
+
+  <div class="result-area" id="result-area">
+    <p class="result-title">🎉 チーム決定！！ 🎉</p>
+    <div class="team-card team-a">
+      <p class="team-title">
+        🔴 チームA
+        <span class="team-count" id="count-a"></span>
+      </p>
+      <div class="team-members" id="team-a-members"></div>
+    </div>
+    <div class="team-card team-b">
+      <p class="team-title">
+        🔵 チームB
+        <span class="team-count" id="count-b"></span>
+      </p>
+      <div class="team-members" id="team-b-members"></div>
+    </div>
+    <button class="btn-reset" onclick="resetRoulette()">🔄 もう一回！</button>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzn8iOCDtRZbp00ho-WHa9iIX-YWoygHPXILXowpBRlv5hAiDjluvR_4a8eRsNka4Lp/exec';
+
+const EMOJIS = ['⚽', '🏀', '🎾', '🏐', '🎯', '🏆', '⭐', '🌟'];
+let members = [];
+
+function el(id) { return document.getElementById(id); }
+
+async function loadMembers() {
+  el('loading-msg').textContent = 'メンバーを読み込み中...';
+  try {
+    const res = await fetch(GAS_URL + '?action=getMembers', { mode: 'cors' });
+    const data = await res.json();
+    members = data.members || [];
+
+    if (members.length === 0) {
+      el('loading-msg').textContent = '';
+      showError('参加者が登録されていません。フォームで出欠を入力してね！');
+      return;
+    }
+
+    el('loading-msg').textContent = '';
+    el('members-card').style.display = 'block';
+    el('member-count').textContent = members.length + '人';
+
+    const chips = el('member-chips');
+    chips.innerHTML = '';
+    members.forEach((m, i) => {
+      const c = document.createElement('span');
+      c.className = 'chip';
+      c.textContent = m;
+      c.style.animationDelay = (i * 0.05) + 's';
+      chips.appendChild(c);
+    });
+
+    el('btn-start').disabled = false;
+    el('subtitle').textContent = members.length + '人でチーム分け！';
+
+  } catch(e) {
+    el('loading-msg').textContent = '';
+    showError('データの読み込みに失敗しました。もう一度試してね！');
+    console.error(e);
+  }
+}
+
+function showError(msg) {
+  el('error-area').innerHTML = '<p class="error-msg">' + msg + '</p>';
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startRoulette() {
+  if (members.length === 0) return;
+
+  el('btn-start').disabled = true;
+  el('result-area').classList.remove('show');
+  el('error-area').innerHTML = '';
+
+  const ball = el('big-ball');
+  ball.className = 'big-ball spinning';
+
+  let count = 0;
+  const spinInterval = setInterval(() => {
+    ball.textContent = EMOJIS[count % EMOJIS.length];
+    count++;
+  }, 150);
+
+  let dots = 0;
+  const msgInterval = setInterval(() => {
+    const msgs = ['ルーレット中', 'ルーレット中・', 'ルーレット中・・', 'ルーレット中・・・'];
+    el('subtitle').textContent = msgs[dots % 4];
+    dots++;
+  }, 300);
+
+  setTimeout(() => {
+    clearInterval(spinInterval);
+    clearInterval(msgInterval);
+
+    ball.textContent = '🏆';
+    ball.className = 'big-ball bouncing';
+
+    el('subtitle').textContent = '🎉 チーム決定！！ 🎉';
+
+    const shuffled = shuffle(members);
+    const mid = Math.ceil(shuffled.length / 2);
+    const teamA = shuffled.slice(0, mid);
+    const teamB = shuffled.slice(mid);
+
+    el('count-a').textContent = teamA.length + '人';
+    el('count-b').textContent = teamB.length + '人';
+
+    el('team-a-members').innerHTML = '';
+    el('team-b-members').innerHTML = '';
+
+    teamA.forEach((m, i) => {
+      const c = document.createElement('span');
+      c.className = 'team-chip';
+      c.textContent = m;
+      c.style.animationDelay = (i * 0.08) + 's';
+      el('team-a-members').appendChild(c);
+    });
+
+    teamB.forEach((m, i) => {
+      const c = document.createElement('span');
+      c.className = 'team-chip';
+      c.textContent = m;
+      c.style.animationDelay = ((teamA.length + i) * 0.08) + 's';
+      el('team-b-members').appendChild(c);
+    });
+
+    el('result-area').classList.add('show');
+    launchConfetti();
+    el('btn-start').disabled = false;
+
+  }, 2500);
+}
+
+function resetRoulette() {
+  el('result-area').classList.remove('show');
+  const ball = el('big-ball');
+  ball.textContent = '⚽';
+  ball.className = 'big-ball';
+  void ball.offsetWidth;
+  ball.className = 'big-ball';
+  ball.style.animation = 'float 3s ease-in-out infinite';
+  el('subtitle').textContent = members.length + '人でチーム分け！';
+}
+
+function launchConfetti() {
+  const wrap = el('confetti-wrap');
+  wrap.innerHTML = '';
+  const colors = ['#f97316','#ef4444','#3b82f6','#22c55e','#eab308','#a855f7','#ec4899','#06b6d4'];
+  for (let i = 0; i < 80; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    const size = 6 + Math.random() * 10;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+    p.style.animationDuration = (1.8 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * 0.8) + 's';
+    wrap.appendChild(p);
+  }
+  setTimeout(() => { wrap.innerHTML = ''; }, 5000);
+}
+
+loadMembers();
+</script>
+</body>
+</html>
