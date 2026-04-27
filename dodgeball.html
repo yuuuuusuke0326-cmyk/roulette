@@ -205,7 +205,7 @@
       <div class="preview-chips" id="preview-chips"></div>
     </div>
     <button class="btn-orange" id="btn-start-roulette" onclick="startRoulette()">🎯 チーム分けスタート！</button>
-    <button class="btn-ghost" onclick="showPage('select')">← メンバーを変更する</button>
+    <button class="btn-ghost" id="btn-back-from-roulette" onclick="showPage('select')">← メンバーを変更する</button>
   </div>
 
   <!-- ページ3: 試合入力 -->
@@ -238,7 +238,7 @@
       <p class="save-status" id="save-status"></p>
     </div>
     <button class="btn-primary" onclick="continueMatch()">同じチームでもう1試合</button>
-    <button class="btn-orange" onclick="reshuffleMatch()">🎯 チームを組み直す</button>
+    <button class="btn-orange" onclick="goToReshuffle()">🎯 チームを組み直す</button>
     <button class="btn-ghost" onclick="showSummary()">練習終了 → 結果を見る</button>
   </div>
 
@@ -268,6 +268,7 @@ const EMOJIS = ['⚽','🏀','🎾','🏐','🎯','🏆','⭐','🌟'];
 let allMembers = [];
 let selectedMembers = new Set();
 let allSelected = false;
+let isReshuffle = false;
 let teams = { a: [], b: [] };
 let outA = new Set();
 let outB = new Set();
@@ -394,10 +395,20 @@ function startRoulette() {
     ball.className = 'big-ball';
     ball.style.animation = 'float 3s ease-in-out infinite';
     el('roulette-subtitle').textContent = '🎉 チーム決定！！';
-    const members = Array.from(selectedMembers);
-    const shuffled = shuffle(members);
-    const mid = Math.ceil(shuffled.length / 2);
-    teams = { a: shuffled.slice(0, mid), b: shuffled.slice(mid) };
+
+    if (isReshuffle) {
+      const all = [...teams.a, ...teams.b].sort(() => Math.random() - 0.5);
+      const mid = Math.ceil(all.length / 2);
+      teams = { a: all.slice(0, mid), b: all.slice(mid) };
+      isReshuffle = false;
+      el('btn-back-from-roulette').style.display = '';
+    } else {
+      const members = Array.from(selectedMembers);
+      const shuffled = shuffle(members);
+      const mid = Math.ceil(shuffled.length / 2);
+      teams = { a: shuffled.slice(0, mid), b: shuffled.slice(mid) };
+    }
+
     launchConfetti();
     setTimeout(() => { initMatch(); showPage('match'); el('btn-start-roulette').disabled = false; }, 800);
   }, 2500);
@@ -504,8 +515,28 @@ function continueMatch() {
   showPage('match');
 }
 
-function reshuffleMatch() {
+function goToReshuffle() {
   matchNum++;
+  const chips = el('preview-chips');
+  chips.innerHTML = '';
+  const all = [...teams.a, ...teams.b];
+  all.forEach(name => {
+    const c = document.createElement('span');
+    c.className = 'preview-chip';
+    c.textContent = name;
+    chips.appendChild(c);
+  });
+  el('roulette-subtitle').textContent = all.length + '人でチーム組み直し！';
+  el('big-ball').className = 'big-ball';
+  el('big-ball').textContent = '⚽';
+  el('big-ball').style.animation = 'float 3s ease-in-out infinite';
+  el('btn-start-roulette').disabled = false;
+  el('btn-back-from-roulette').style.display = 'none';
+  isReshuffle = true;
+  showPage('roulette');
+}
+
+function reshuffleMatch() {
   const all = [...teams.a, ...teams.b].sort(() => Math.random() - 0.5);
   const mid = Math.ceil(all.length / 2);
   teams = { a: all.slice(0, mid), b: all.slice(mid) };
