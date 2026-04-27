@@ -13,7 +13,7 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
     background: #fff8f0;
     min-height: 100vh;
-    padding-bottom: 2rem;
+    padding-bottom: 3rem;
   }
 
   @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
@@ -22,7 +22,7 @@
   @keyframes float { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-10px) rotate(5deg)} }
   @keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
   @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
 
   .header {
     background: linear-gradient(135deg, #f97316, #ef4444);
@@ -53,6 +53,168 @@
     margin: 0 auto;
   }
 
+  /* ステップインジケーター */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 1.25rem;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    border: 2px solid #fed7aa;
+    background: white;
+    color: #d97706;
+    transition: all 0.3s;
+  }
+
+  .step.active .step-circle {
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 8px rgba(249,115,22,0.4);
+  }
+
+  .step.done .step-circle {
+    background: #22c55e;
+    border-color: transparent;
+    color: white;
+  }
+
+  .step-label {
+    font-size: 10px;
+    color: #b45309;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .step-line {
+    width: 40px;
+    height: 2px;
+    background: #fed7aa;
+    margin: 0 4px;
+    margin-bottom: 18px;
+    transition: background 0.3s;
+  }
+
+  .step-line.done { background: #22c55e; }
+
+  /* ページ */
+  .page { display: none; animation: fadeIn 0.35s ease; }
+  .page.active { display: block; }
+
+  /* 名簿選択ページ */
+  .select-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .select-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #9a3412;
+  }
+
+  .select-all-btn {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1.5px solid #f97316;
+    background: white;
+    color: #f97316;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .select-all-btn:active { background: #fff7ed; }
+
+  .member-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .member-item {
+    padding: 12px 10px;
+    border-radius: 12px;
+    border: 2px solid #fed7aa;
+    background: white;
+    cursor: pointer;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #9a3412;
+    transition: all 0.15s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    animation: pop 0.25s ease;
+  }
+
+  .member-item:active { transform: scale(0.96); }
+
+  .member-item.selected {
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 8px rgba(249,115,22,0.35);
+  }
+
+  .member-item.selected::before {
+    content: '✓ ';
+    font-size: 12px;
+  }
+
+  .selected-count {
+    text-align: center;
+    font-size: 13px;
+    color: #b45309;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    min-height: 20px;
+  }
+
+  .btn-next {
+    width: 100%;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    color: white;
+    transition: all 0.1s;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 16px rgba(249,115,22,0.4);
+  }
+  .btn-next:active { transform: scale(0.97); }
+  .btn-next:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ルーレットページ */
   .ball-area {
     position: relative;
     height: 140px;
@@ -74,17 +236,9 @@
     animation: float 3s ease-in-out infinite;
     border: 5px solid rgba(255,255,255,0.6);
     box-shadow: 0 8px 24px rgba(249,115,22,0.35), inset 0 -6px 16px rgba(0,0,0,0.1);
-    cursor: default;
-    transition: transform 0.2s;
   }
 
-  .big-ball.spinning {
-    animation: spin 0.25s linear infinite;
-  }
-
-  .big-ball.bouncing {
-    animation: bounce 0.4s ease 4, float 3s ease-in-out 1.6s infinite;
-  }
+  .big-ball.spinning { animation: spin 0.25s linear infinite; }
 
   .star {
     position: absolute;
@@ -107,50 +261,36 @@
     letter-spacing: 0.5px;
   }
 
-  .members-card {
+  .selected-preview {
     background: white;
     border-radius: 16px;
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     margin-bottom: 1rem;
     border: 1.5px solid #fed7aa;
-    animation: fadeIn 0.4s ease;
   }
 
-  .members-label {
-    font-size: 12px;
+  .preview-label {
+    font-size: 11px;
     color: #9a3412;
     font-weight: 700;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    margin-bottom: 6px;
     letter-spacing: 0.5px;
   }
 
-  .count-badge {
-    background: #f97316;
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
-  }
-
-  .member-chips {
+  .preview-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px;
   }
 
-  .chip {
-    font-size: 13px;
-    font-weight: 500;
-    padding: 5px 12px;
+  .preview-chip {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
     border-radius: 20px;
     background: #fff7ed;
     border: 1px solid #fed7aa;
     color: #9a3412;
-    animation: pop 0.3s ease;
   }
 
   .btn-start {
@@ -164,31 +304,28 @@
     background: linear-gradient(135deg, #f97316, #ef4444);
     color: white;
     margin-bottom: 0.75rem;
-    transition: transform 0.1s, box-shadow 0.1s;
+    transition: all 0.1s;
     letter-spacing: 2px;
     box-shadow: 0 4px 16px rgba(249,115,22,0.4);
   }
-  .btn-start:active { transform: scale(0.97); box-shadow: 0 2px 8px rgba(249,115,22,0.3); }
+  .btn-start:active { transform: scale(0.97); }
   .btn-start:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .btn-start.pulse { animation: pulse 0.6s ease infinite; }
 
-  .loading-msg {
-    text-align: center;
+  .btn-back {
+    width: 100%;
+    padding: 12px;
     font-size: 14px;
-    color: #b45309;
     font-weight: 600;
-    margin-bottom: 0.75rem;
-    min-height: 20px;
+    border-radius: 50px;
+    border: 2px solid #fed7aa;
+    background: white;
+    color: #b45309;
+    cursor: pointer;
+    transition: all 0.15s;
   }
+  .btn-back:active { background: #fff7ed; }
 
-  .result-area {
-    display: none;
-  }
-  .result-area.show {
-    display: block;
-    animation: fadeIn 0.5s ease;
-  }
-
+  /* 結果ページ */
   .result-title {
     text-align: center;
     font-size: 18px;
@@ -200,19 +337,12 @@
 
   .team-card {
     border-radius: 16px;
-    padding: 1rem 1rem 1rem;
+    padding: 1rem;
     margin-bottom: 0.75rem;
   }
 
-  .team-a {
-    background: #fff1f2;
-    border: 2px solid #fca5a5;
-  }
-
-  .team-b {
-    background: #eff6ff;
-    border: 2px solid #93c5fd;
-  }
+  .team-a { background: #fff1f2; border: 2px solid #fca5a5; }
+  .team-b { background: #eff6ff; border: 2px solid #93c5fd; }
 
   .team-title {
     font-size: 17px;
@@ -238,11 +368,7 @@
   .team-a .team-count { background: #fee2e2; color: #991b1b; }
   .team-b .team-count { background: #dbeafe; color: #1e40af; }
 
-  .team-members {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-  }
+  .team-members { display: flex; flex-wrap: wrap; gap: 7px; }
 
   .team-chip {
     font-size: 15px;
@@ -252,34 +378,66 @@
     animation: pop 0.4s ease;
   }
 
-  .team-a .team-chip {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1.5px solid #fca5a5;
+  .team-a .team-chip { background: #fee2e2; color: #991b1b; border: 1.5px solid #fca5a5; }
+  .team-b .team-chip { background: #dbeafe; color: #1e40af; border: 1.5px solid #93c5fd; }
+
+  .result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
   }
 
-  .team-b .team-chip {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1.5px solid #93c5fd;
-  }
-
-  .btn-reset {
+  .btn-retry {
     width: 100%;
     padding: 14px;
     font-size: 16px;
     font-weight: 700;
     border-radius: 50px;
     border: 2.5px solid #f97316;
-    cursor: pointer;
     background: white;
     color: #f97316;
-    margin-top: 0.5rem;
+    cursor: pointer;
     transition: all 0.15s;
     letter-spacing: 1px;
   }
-  .btn-reset:active { background: #fff7ed; transform: scale(0.97); }
+  .btn-retry:active { background: #fff7ed; transform: scale(0.97); }
 
+  .btn-reselect {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 50px;
+    border: 2px solid #fed7aa;
+    background: white;
+    color: #b45309;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-reselect:active { background: #fff7ed; }
+
+  /* ローディング・エラー */
+  .loading-msg {
+    text-align: center;
+    font-size: 14px;
+    color: #b45309;
+    font-weight: 600;
+    padding: 2rem 0;
+  }
+
+  .error-msg {
+    text-align: center;
+    color: #dc2626;
+    font-size: 13px;
+    padding: 0.75rem;
+    background: #fff1f2;
+    border-radius: 12px;
+    border: 1px solid #fca5a5;
+    margin-bottom: 1rem;
+  }
+
+  /* 紙吹雪 */
   .confetti-wrap {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -292,17 +450,6 @@
     position: absolute;
     top: -20px;
     animation: confetti-fall linear forwards;
-  }
-
-  .error-msg {
-    text-align: center;
-    color: #dc2626;
-    font-size: 13px;
-    padding: 0.75rem;
-    background: #fff1f2;
-    border-radius: 12px;
-    border: 1px solid #fca5a5;
-    margin-bottom: 1rem;
   }
 </style>
 </head>
@@ -317,97 +464,200 @@
 
 <div class="wrap">
 
-  <div class="ball-area">
-    <span class="star">⭐</span>
-    <span class="star">🌟</span>
-    <span class="star">✨</span>
-    <span class="star">💫</span>
-    <div class="big-ball" id="big-ball">⚽</div>
+  <!-- ステップインジケーター -->
+  <div class="steps">
+    <div class="step active" id="step1">
+      <div class="step-circle">1</div>
+      <span class="step-label">メンバー選択</span>
+    </div>
+    <div class="step-line" id="line1"></div>
+    <div class="step" id="step2">
+      <div class="step-circle">2</div>
+      <span class="step-label">ルーレット</span>
+    </div>
+    <div class="step-line" id="line2"></div>
+    <div class="step" id="step3">
+      <div class="step-circle">3</div>
+      <span class="step-label">結果発表</span>
+    </div>
   </div>
 
-  <p class="subtitle" id="subtitle">ボタンを押してチームを決めよう！</p>
-
-  <div class="members-card" id="members-card" style="display:none">
-    <p class="members-label">
-      👦 参加メンバー
-      <span class="count-badge" id="member-count">0</span>
-    </p>
-    <div class="member-chips" id="member-chips"></div>
+  <!-- ページ1: メンバー選択 -->
+  <div class="page active" id="page-select">
+    <div id="select-loading" class="loading-msg">名簿を読み込み中...</div>
+    <div id="select-content" style="display:none">
+      <div class="select-header">
+        <p class="select-title">👦 参加する子を選んでね</p>
+        <button class="select-all-btn" onclick="toggleSelectAll()">全員選択</button>
+      </div>
+      <div class="member-grid" id="member-grid"></div>
+      <p class="selected-count" id="selected-count">0人選択中</p>
+      <button class="btn-next" id="btn-next" onclick="goToRoulette()" disabled>
+        ルーレットへ →
+      </button>
+    </div>
+    <div id="select-error"></div>
   </div>
 
-  <p class="loading-msg" id="loading-msg">メンバーを読み込み中...</p>
-  <div id="error-area"></div>
+  <!-- ページ2: ルーレット -->
+  <div class="page" id="page-roulette">
+    <div class="ball-area">
+      <span class="star">⭐</span>
+      <span class="star">🌟</span>
+      <span class="star">✨</span>
+      <span class="star">💫</span>
+      <div class="big-ball" id="big-ball">⚽</div>
+    </div>
 
-  <button class="btn-start" id="btn-start" onclick="startRoulette()" disabled>🎯 スタート！</button>
+    <p class="subtitle" id="subtitle">スタートを押してね！</p>
 
-  <div class="result-area" id="result-area">
+    <div class="selected-preview">
+      <p class="preview-label">👥 今日の参加者</p>
+      <div class="preview-chips" id="preview-chips"></div>
+    </div>
+
+    <button class="btn-start" id="btn-start" onclick="startRoulette()">🎯 スタート！</button>
+    <button class="btn-back" onclick="goToSelect()">← メンバーを変更する</button>
+  </div>
+
+  <!-- ページ3: 結果 -->
+  <div class="page" id="page-result">
     <p class="result-title">🎉 チーム決定！！ 🎉</p>
     <div class="team-card team-a">
-      <p class="team-title">
-        🔴 チームA
-        <span class="team-count" id="count-a"></span>
-      </p>
+      <p class="team-title">🔴 チームA <span class="team-count" id="count-a"></span></p>
       <div class="team-members" id="team-a-members"></div>
     </div>
     <div class="team-card team-b">
-      <p class="team-title">
-        🔵 チームB
-        <span class="team-count" id="count-b"></span>
-      </p>
+      <p class="team-title">🔵 チームB <span class="team-count" id="count-b"></span></p>
       <div class="team-members" id="team-b-members"></div>
     </div>
-    <button class="btn-reset" onclick="resetRoulette()">🔄 もう一回！</button>
+    <div class="result-actions">
+      <button class="btn-retry" onclick="retryRoulette()">🔄 もう一回ルーレット！</button>
+      <button class="btn-reselect" onclick="goToSelect()">← メンバーを選び直す</button>
+    </div>
   </div>
 
 </div>
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzn8iOCDtRZbp00ho-WHa9iIX-YWoygHPXILXowpBRlv5hAiDjluvR_4a8eRsNka4Lp/exec';
+const EMOJIS = ['⚽','🏀','🎾','🏐','🎯','🏆','⭐','🌟'];
 
-const EMOJIS = ['⚽', '🏀', '🎾', '🏐', '🎯', '🏆', '⭐', '🌟'];
-let members = [];
+let allMembers = [];
+let selectedMembers = new Set();
+let allSelected = false;
 
 function el(id) { return document.getElementById(id); }
 
-async function loadMembers() {
-  el('loading-msg').textContent = 'メンバーを読み込み中...';
-  try {
-    const res = await fetch(GAS_URL + '?action=getMembers', { mode: 'cors' });
-    const data = await res.json();
-    members = data.members || [];
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el('page-' + name).classList.add('active');
 
-    if (members.length === 0) {
-      el('loading-msg').textContent = '';
-      showError('参加者が登録されていません。フォームで出欠を入力してね！');
-      return;
-    }
+  // ステップ更新
+  const steps = { select: 1, roulette: 2, result: 3 };
+  const current = steps[name];
 
-    el('loading-msg').textContent = '';
-    el('members-card').style.display = 'block';
-    el('member-count').textContent = members.length + '人';
-
-    const chips = el('member-chips');
-    chips.innerHTML = '';
-    members.forEach((m, i) => {
-      const c = document.createElement('span');
-      c.className = 'chip';
-      c.textContent = m;
-      c.style.animationDelay = (i * 0.05) + 's';
-      chips.appendChild(c);
-    });
-
-    el('btn-start').disabled = false;
-    el('subtitle').textContent = members.length + '人でチーム分け！';
-
-  } catch(e) {
-    el('loading-msg').textContent = '';
-    showError('データの読み込みに失敗しました。もう一度試してね！');
-    console.error(e);
+  for (let i = 1; i <= 3; i++) {
+    const s = el('step' + i);
+    s.classList.remove('active', 'done');
+    if (i < current) s.classList.add('done');
+    else if (i === current) s.classList.add('active');
+  }
+  for (let i = 1; i <= 2; i++) {
+    const l = el('line' + i);
+    l.classList.toggle('done', i < current);
   }
 }
 
-function showError(msg) {
-  el('error-area').innerHTML = '<p class="error-msg">' + msg + '</p>';
+async function loadAllMembers() {
+  try {
+    const res = await fetch(GAS_URL + '?action=getAllMembers', { mode: 'cors' });
+    const data = await res.json();
+    allMembers = data.members || [];
+
+    if (allMembers.length === 0) {
+      el('select-loading').style.display = 'none';
+      el('select-error').innerHTML = '<p class="error-msg">名簿にメンバーがいません</p>';
+      return;
+    }
+
+    renderMemberGrid();
+    el('select-loading').style.display = 'none';
+    el('select-content').style.display = 'block';
+
+  } catch(e) {
+    el('select-loading').textContent = '';
+    el('select-error').innerHTML = '<p class="error-msg">読み込みに失敗しました。再読み込みしてください。</p>';
+  }
+}
+
+function renderMemberGrid() {
+  const grid = el('member-grid');
+  grid.innerHTML = '';
+  allMembers.forEach((name, i) => {
+    const div = document.createElement('div');
+    div.className = 'member-item' + (selectedMembers.has(name) ? ' selected' : '');
+    div.textContent = name;
+    div.style.animationDelay = (i * 0.04) + 's';
+    div.onclick = () => toggleMember(name, div);
+    grid.appendChild(div);
+  });
+  updateSelectedCount();
+}
+
+function toggleMember(name, el) {
+  if (selectedMembers.has(name)) {
+    selectedMembers.delete(name);
+    el.classList.remove('selected');
+  } else {
+    selectedMembers.add(name);
+    el.classList.add('selected');
+  }
+  updateSelectedCount();
+}
+
+function toggleSelectAll() {
+  allSelected = !allSelected;
+  if (allSelected) {
+    allMembers.forEach(n => selectedMembers.add(n));
+  } else {
+    selectedMembers.clear();
+  }
+  renderMemberGrid();
+  const btn = document.querySelector('.select-all-btn');
+  btn.textContent = allSelected ? '全員解除' : '全員選択';
+}
+
+function updateSelectedCount() {
+  const count = selectedMembers.size;
+  el('selected-count').textContent = count > 0 ? count + '人選択中' : 'タップして参加者を選んでね';
+  el('btn-next').disabled = count < 2;
+}
+
+function goToRoulette() {
+  if (selectedMembers.size < 2) return;
+
+  // プレビューチップを表示
+  const chips = el('preview-chips');
+  chips.innerHTML = '';
+  Array.from(selectedMembers).forEach(name => {
+    const c = document.createElement('span');
+    c.className = 'preview-chip';
+    c.textContent = name;
+    chips.appendChild(c);
+  });
+
+  el('subtitle').textContent = selectedMembers.size + '人でチーム分け！';
+  el('big-ball').className = 'big-ball';
+  el('big-ball').textContent = '⚽';
+  el('big-ball').style.animation = 'float 3s ease-in-out infinite';
+  el('btn-start').disabled = false;
+
+  showPage('roulette');
+}
+
+function goToSelect() {
+  showPage('select');
 }
 
 function shuffle(arr) {
@@ -420,13 +670,11 @@ function shuffle(arr) {
 }
 
 function startRoulette() {
-  if (members.length === 0) return;
-
   el('btn-start').disabled = true;
-  el('result-area').classList.remove('show');
-  el('error-area').innerHTML = '';
+  el('btn-back') && (el('btn-back').style.pointerEvents = 'none');
 
   const ball = el('big-ball');
+  ball.style.animation = '';
   ball.className = 'big-ball spinning';
 
   let count = 0;
@@ -447,10 +695,12 @@ function startRoulette() {
     clearInterval(msgInterval);
 
     ball.textContent = '🏆';
-    ball.className = 'big-ball bouncing';
+    ball.className = 'big-ball';
+    ball.style.animation = 'bounce 0.4s ease 4, float 3s ease-in-out 1.6s infinite';
 
     el('subtitle').textContent = '🎉 チーム決定！！ 🎉';
 
+    const members = Array.from(selectedMembers);
     const shuffled = shuffle(members);
     const mid = Math.ceil(shuffled.length / 2);
     const teamA = shuffled.slice(0, mid);
@@ -478,22 +728,25 @@ function startRoulette() {
       el('team-b-members').appendChild(c);
     });
 
-    el('result-area').classList.add('show');
     launchConfetti();
-    el('btn-start').disabled = false;
+
+    setTimeout(() => {
+      showPage('result');
+      el('btn-start').disabled = false;
+      el('btn-back') && (el('btn-back').style.pointerEvents = '');
+    }, 800);
 
   }, 2500);
 }
 
-function resetRoulette() {
-  el('result-area').classList.remove('show');
+function retryRoulette() {
+  showPage('roulette');
   const ball = el('big-ball');
   ball.textContent = '⚽';
   ball.className = 'big-ball';
-  void ball.offsetWidth;
-  ball.className = 'big-ball';
   ball.style.animation = 'float 3s ease-in-out infinite';
-  el('subtitle').textContent = members.length + '人でチーム分け！';
+  el('subtitle').textContent = selectedMembers.size + '人でチーム分け！';
+  el('btn-start').disabled = false;
 }
 
 function launchConfetti() {
@@ -516,7 +769,7 @@ function launchConfetti() {
   setTimeout(() => { wrap.innerHTML = ''; }, 5000);
 }
 
-loadMembers();
+loadAllMembers();
 </script>
 </body>
 </html>
