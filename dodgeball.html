@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ドッジボール記録">
+<title>ドッジボール記録</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f0f9ff; min-height: 100vh; padding-bottom: 3rem; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-10px) rotate(5deg)} }
+  @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+  @keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+
+  .header {
+    padding: 1.25rem 1rem 1.5rem;
+    text-align: center;
+    border-radius: 0 0 24px 24px;
+    margin-bottom: 1.25rem;
+  }
+  .header.blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 4px 16px rgba(37,99,235,0.25); }
+  .header.orange { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 4px 16px rgba(249,115,22,0.25); }
+  .header h1 { color: white; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  .header p { color: rgba(255,255,255,0.85); font-size: 13px; margin-top: 4px; }
+
+  .wrap { padding: 0 1rem; max-width: 480px; margin: 0 auto; }
+  .page { display: none; animation: fadeIn 0.35s ease; }
+  .page.active { display: block; }
+
+  /* ステップ */
+  .steps { display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .step-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border: 2px solid #bfdbfe; background: white; color: #3b82f6; transition: all 0.3s; }
+  .step.active .step-circle { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: transparent; color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.4); }
+  .step.done .step-circle { background: #22c55e; border-color: transparent; color: white; }
+  .step-label { font-size: 10px; color: #3b82f6; font-weight: 600; white-space: nowrap; }
+  .step-line { width: 28px; height: 2px; background: #bfdbfe; margin: 0 3px 18px; transition: background 0.3s; }
+  .step-line.done { background: #22c55e; }
+
+  /* 共通カード */
+  .card { background: white; border-radius: 16px; padding: 1rem; margin-bottom: 0.75rem; border: 1.5px solid #e0e7ff; }
+
+  /* メンバー選択 */
+  .select-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .select-title { font-size: 15px; font-weight: 700; color: #1e40af; }
+  .btn-select-all { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; border: 1.5px solid #2563eb; background: white; color: #2563eb; cursor: pointer; }
+  .btn-select-all:active { background: #eff6ff; }
+
+  .member-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .member-item { padding: 12px 8px; border-radius: 12px; border: 2px solid #bfdbfe; background: white; cursor: pointer; text-align: center; font-size: 14px; font-weight: 600; color: #1e40af; transition: all 0.15s; user-select: none; -webkit-tap-highlight-color: transparent; animation: pop 0.25s ease; }
+  .member-item:active { transform: scale(0.96); }
+  .member-item.selected { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: transparent; color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.35); }
+  .member-item.selected::before { content: '✓ '; font-size: 12px; }
+
+  .selected-count { text-align: center; font-size: 13px; color: #3b82f6; font-weight: 600; margin-bottom: 0.75rem; min-height: 20px; }
+
+  /* ルーレット */
+  .ball-area { position: relative; height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; }
+  .big-ball { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #f97316, #ef4444); display: flex; align-items: center; justify-content: center; font-size: 48px; animation: float 3s ease-in-out infinite; border: 4px solid rgba(255,255,255,0.5); box-shadow: 0 6px 20px rgba(249,115,22,0.3); }
+  .big-ball.spinning { animation: spin 0.25s linear infinite; }
+  .star { position: absolute; font-size: 20px; animation: float 2s ease-in-out infinite; pointer-events: none; }
+  .star:nth-child(1){top:8px;left:24px;animation-delay:0s}
+  .star:nth-child(2){top:4px;right:32px;animation-delay:0.4s}
+  .star:nth-child(3){bottom:10px;left:16px;animation-delay:0.8s}
+  .star:nth-child(4){bottom:6px;right:20px;animation-delay:1.2s}
+
+  .roulette-subtitle { text-align: center; font-size: 14px; color: #b45309; font-weight: 600; margin-bottom: 1rem; min-height: 20px; }
+
+  .preview-card { background: white; border-radius: 12px; padding: 0.75rem; margin-bottom: 0.75rem; border: 1.5px solid #fed7aa; }
+  .preview-label { font-size: 11px; color: #9a3412; font-weight: 700; margin-bottom: 6px; }
+  .preview-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .preview-chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+
+  /* チーム表示 */
+  .teams-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
+  .team-card { border-radius: 14px; padding: 0.875rem; }
+  .team-a-card { background: #fff1f2; border: 2px solid #fca5a5; }
+  .team-b-card { background: #eff6ff; border: 2px solid #93c5fd; }
+  .team-name { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .team-a-card .team-name { color: #dc2626; }
+  .team-b-card .team-name { color: #2563eb; }
+
+  /* 試合入力 */
+  .out-count-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 10px; float: right; }
+  .team-a-card .out-count-badge { background: #fee2e2; color: #991b1b; }
+  .team-b-card .out-count-badge { background: #dbeafe; color: #1e40af; }
+
+  .member-btn { width: 100%; padding: 9px 6px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-size: 13px; font-weight: 600; text-align: center; transition: all 0.15s; display: block; margin-bottom: 5px; -webkit-tap-highlight-color: transparent; }
+  .member-btn:active { transform: scale(0.95); }
+  .member-btn.alive-a { background: white; color: #dc2626; border-color: #fca5a5; }
+  .member-btn.alive-b { background: white; color: #2563eb; border-color: #93c5fd; }
+  .member-btn.out { background: #e5e7eb; color: #9ca3af; border-color: #d1d5db; text-decoration: line-through; }
+
+  /* 結果カード */
+  .result-card { background: white; border-radius: 16px; border: 2px solid #e0e7ff; padding: 1.25rem; margin-bottom: 0.75rem; text-align: center; animation: fadeIn 0.4s ease; }
+  .win-emoji { font-size: 36px; margin-bottom: 4px; }
+  .win-text { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .win-a { color: #dc2626; }
+  .win-b { color: #2563eb; }
+  .win-draw { color: #d97706; }
+  .result-detail { font-size: 13px; color: #6b7280; margin-bottom: 10px; }
+  .out-result { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .out-box { border-radius: 10px; padding: 8px; font-size: 12px; }
+  .out-box-a { background: #fee2e2; }
+  .out-box-b { background: #dbeafe; }
+  .out-box-label { font-weight: 700; margin-bottom: 4px; }
+  .out-box-a .out-box-label { color: #991b1b; }
+  .out-box-b .out-box-label { color: #1e40af; }
+  .out-box-names { color: #6b7280; font-size: 11px; line-height: 1.6; }
+
+  /* サマリー */
+  .summary-title { font-size: 15px; font-weight: 700; color: #1f2937; margin-bottom: 12px; text-align: center; }
+  .log-item { background: #f3f4f6; border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; font-size: 12px; color: #6b7280; display: flex; justify-content: space-between; align-items: center; }
+  .log-win { font-weight: 700; }
+  .log-win.a { color: #dc2626; }
+  .log-win.b { color: #2563eb; }
+  .log-win.draw { color: #d97706; }
+  .stat-legend { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+  .legend-win { font-size: 11px; font-weight: 700; color: #2563eb; }
+  .legend-survive { font-size: 11px; font-weight: 700; color: #16a34a; }
+  .stat-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 0.5px solid #e5e7eb; gap: 8px; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-name { font-size: 13px; font-weight: 600; color: #1f2937; width: 72px; flex-shrink: 0; }
+  .stat-nums { font-size: 11px; color: #6b7280; width: 56px; flex-shrink: 0; }
+  .bar-wrap { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+  .bar-win { height: 100%; border-radius: 3px; background: #2563eb; transition: width 0.5s ease; }
+  .stat-rate { font-size: 12px; font-weight: 700; color: #2563eb; min-width: 32px; text-align: right; }
+  .survive-rate { font-size: 11px; color: #16a34a; min-width: 32px; text-align: right; }
+  .save-status { text-align: center; font-size: 13px; font-weight: 600; margin-top: 6px; min-height: 20px; }
+  .save-status.saving { color: #d97706; }
+  .save-status.saved { color: #16a34a; }
+  .save-status.error { color: #dc2626; }
+
+  /* 共通ボタン */
+  .btn-primary { width: 100%; padding: 14px; border-radius: 50px; border: none; cursor: pointer; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; margin-bottom: 0.5rem; transition: transform 0.1s; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-orange { width: 100%; padding: 14px; border-radius: 50px; border: none; cursor: pointer; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #f97316, #ef4444); color: white; margin-bottom: 0.5rem; transition: transform 0.1s; box-shadow: 0 4px 14px rgba(249,115,22,0.35); }
+  .btn-orange:active { transform: scale(0.97); }
+  .btn-secondary { width: 100%; padding: 12px; border-radius: 50px; border: 2px solid #bfdbfe; background: white; color: #3b82f6; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 0.5rem; transition: all 0.15s; }
+  .btn-secondary:active { background: #eff6ff; }
+  .btn-ghost { width: 100%; padding: 10px; border-radius: 50px; border: 2px solid #e5e7eb; background: transparent; color: #9ca3af; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 0.5rem; }
+
+  .match-badge { text-align: center; margin-bottom: 0.75rem; }
+  .badge { display: inline-block; background: #dbeafe; color: #1e40af; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 20px; }
+  .instruction { text-align: center; font-size: 13px; color: #6b7280; margin-bottom: 0.75rem; font-weight: 600; }
+
+  .loading-msg { text-align: center; font-size: 14px; color: #3b82f6; font-weight: 600; padding: 2rem 0; }
+  .error-msg { text-align: center; color: #dc2626; font-size: 13px; padding: 0.75rem; background: #fff1f2; border-radius: 12px; border: 1px solid #fca5a5; margin-bottom: 1rem; }
+
+  .confetti-wrap { position: fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; overflow:hidden; z-index:9999; }
+  .confetti-piece { position:absolute; top:-20px; animation:confetti-fall linear forwards; }
+</style>
+</head>
+<body>
+
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
+<div class="header blue" id="main-header">
+  <h1 id="header-title">⚽ ドッジボール記録</h1>
+  <p id="header-sub">メンバーを選んで試合を記録しよう</p>
+</div>
+
+<div class="wrap">
+
+  <!-- ステップ -->
+  <div class="steps" id="steps-area">
+    <div class="step active" id="step1"><div class="step-circle">1</div><span class="step-label">メンバー</span></div>
+    <div class="step-line" id="line1"></div>
+    <div class="step" id="step2"><div class="step-circle">2</div><span class="step-label">チーム分け</span></div>
+    <div class="step-line" id="line2"></div>
+    <div class="step" id="step3"><div class="step-circle">3</div><span class="step-label">試合記録</span></div>
+    <div class="step-line" id="line3"></div>
+    <div class="step" id="step4"><div class="step-circle">4</div><span class="step-label">結果</span></div>
+  </div>
+
+  <!-- ページ1: メンバー選択 -->
+  <div class="page active" id="page-select">
+    <div id="select-loading" class="loading-msg">名簿を読み込み中...</div>
+    <div id="select-content" style="display:none">
+      <div class="select-header">
+        <p class="select-title">👦 参加する子を選んでね</p>
+        <button class="btn-select-all" onclick="toggleSelectAll()">全員選択</button>
+      </div>
+      <div class="member-grid" id="member-grid"></div>
+      <p class="selected-count" id="selected-count">タップして参加者を選んでね</p>
+      <button class="btn-primary" id="btn-to-roulette" onclick="goToRoulette()" disabled>チーム分けへ →</button>
+    </div>
+    <div id="select-error"></div>
+  </div>
+
+  <!-- ページ2: ルーレット -->
+  <div class="page" id="page-roulette">
+    <div class="ball-area">
+      <span class="star">⭐</span><span class="star">🌟</span><span class="star">✨</span><span class="star">💫</span>
+      <div class="big-ball" id="big-ball">⚽</div>
+    </div>
+    <p class="roulette-subtitle" id="roulette-subtitle">スタートを押してね！</p>
+    <div class="preview-card">
+      <p class="preview-label">👥 今日の参加者</p>
+      <div class="preview-chips" id="preview-chips"></div>
+    </div>
+    <button class="btn-orange" id="btn-start-roulette" onclick="startRoulette()">🎯 チーム分けスタート！</button>
+    <button class="btn-ghost" onclick="showPage('select')">← メンバーを変更する</button>
+  </div>
+
+  <!-- ページ3: 試合入力 -->
+  <div class="page" id="page-match">
+    <div class="match-badge"><span class="badge" id="match-badge">第1試合</span></div>
+    <p class="instruction">当てられた子をタップ！（もう一度タップで取り消し）</p>
+    <div class="teams-row">
+      <div class="team-card team-a-card">
+        <p class="team-name">🔴 チームA <span class="out-count-badge" id="out-badge-a">退場 0人</span></p>
+        <div id="btn-grid-a"></div>
+      </div>
+      <div class="team-card team-b-card">
+        <p class="team-name">🔵 チームB <span class="out-count-badge" id="out-badge-b">退場 0人</span></p>
+        <div id="btn-grid-b"></div>
+      </div>
+    </div>
+    <button class="btn-orange" onclick="finishMatch()">試合終了 → 勝敗を記録</button>
+  </div>
+
+  <!-- ページ4: 試合結果 -->
+  <div class="page" id="page-result">
+    <div class="result-card">
+      <div class="win-emoji" id="win-emoji"></div>
+      <p class="win-text" id="win-text"></p>
+      <p class="result-detail" id="result-detail"></p>
+      <div class="out-result">
+        <div class="out-box out-box-a"><p class="out-box-label">チームA 退場</p><p class="out-box-names" id="out-names-a">なし</p></div>
+        <div class="out-box out-box-b"><p class="out-box-label">チームB 退場</p><p class="out-box-names" id="out-names-b">なし</p></div>
+      </div>
+      <p class="save-status" id="save-status"></p>
+    </div>
+    <button class="btn-primary" onclick="continueMatch()">同じチームでもう1試合</button>
+    <button class="btn-orange" onclick="reshuffleMatch()">🎯 チームを組み直す</button>
+    <button class="btn-ghost" onclick="showSummary()">練習終了 → 結果を見る</button>
+  </div>
+
+  <!-- ページ5: サマリー -->
+  <div class="page" id="page-summary">
+    <div class="card">
+      <p class="summary-title">📋 本日の試合履歴</p>
+      <div id="match-log-list"></div>
+    </div>
+    <div class="card">
+      <p class="summary-title">🏆 個人成績</p>
+      <div class="stat-legend">
+        <span class="legend-win">勝率</span>
+        <span class="legend-survive">生存率</span>
+      </div>
+      <div id="personal-stats"></div>
+    </div>
+    <button class="btn-primary" onclick="resetAll()">最初からやり直す</button>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwLQO9D6Av03FaGnmop462vyAsFztizRAuev2U0gSAboKbtKXqiju2ef5Axko2V7avn/exec';
+const EMOJIS = ['⚽','🏀','🎾','🏐','🎯','🏆','⭐','🌟'];
+
+let allMembers = [];
+let selectedMembers = new Set();
+let allSelected = false;
+let teams = { a: [], b: [] };
+let outA = new Set();
+let outB = new Set();
+let matchNum = 1;
+let matchLogs = [];
+let stats = {};
+
+function el(id) { return document.getElementById(id); }
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el('page-' + name).classList.add('active');
+  const stepMap = { select:1, roulette:2, match:3, result:4, summary:5 };
+  const cur = stepMap[name] || 1;
+  for (let i = 1; i <= 4; i++) {
+    const s = el('step' + i);
+    s.classList.remove('active','done');
+    if (i < cur) s.classList.add('done');
+    else if (i === cur) s.classList.add('active');
+  }
+  for (let i = 1; i <= 3; i++) {
+    el('line' + i).classList.toggle('done', i < cur);
+  }
+  const headers = { select:['⚽ ドッジボール記録','メンバーを選んで試合を記録しよう','blue'], roulette:['🎯 チーム分けルーレット','スタートを押してね！','orange'], match:['⚽ 試合記録','当てられた子をタップしよう','blue'], result:['🏆 試合結果','次の試合へ進もう','blue'], summary:['📊 本日の結果','お疲れ様でした！','blue'] };
+  const h = headers[name] || headers.select;
+  el('header-title').textContent = h[0];
+  el('header-sub').textContent = h[1];
+  el('main-header').className = 'header ' + h[2];
+  el('steps-area').style.display = name === 'summary' ? 'none' : 'flex';
+  window.scrollTo(0, 0);
+}
+
+async function loadAllMembers() {
+  try {
+    const res = await fetch(GAS_URL + '?action=getAllMembers', { mode: 'cors' });
+    const data = await res.json();
+    allMembers = data.members || [];
+    if (allMembers.length === 0) {
+      el('select-loading').style.display = 'none';
+      el('select-error').innerHTML = '<p class="error-msg">名簿にメンバーがいません</p>';
+      return;
+    }
+    el('select-loading').style.display = 'none';
+    el('select-content').style.display = 'block';
+    renderMemberGrid();
+  } catch(e) {
+    el('select-loading').style.display = 'none';
+    el('select-error').innerHTML = '<p class="error-msg">読み込みに失敗しました。再読み込みしてください。</p>';
+  }
+}
+
+function renderMemberGrid() {
+  const grid = el('member-grid');
+  grid.innerHTML = '';
+  allMembers.forEach((name, i) => {
+    const div = document.createElement('div');
+    div.className = 'member-item' + (selectedMembers.has(name) ? ' selected' : '');
+    div.textContent = name;
+    div.style.animationDelay = (i * 0.04) + 's';
+    div.onclick = () => {
+      if (selectedMembers.has(name)) { selectedMembers.delete(name); div.classList.remove('selected'); }
+      else { selectedMembers.add(name); div.classList.add('selected'); }
+      updateSelectedCount();
+    };
+    grid.appendChild(div);
+  });
+  updateSelectedCount();
+}
+
+function toggleSelectAll() {
+  allSelected = !allSelected;
+  allSelected ? allMembers.forEach(n => selectedMembers.add(n)) : selectedMembers.clear();
+  renderMemberGrid();
+  document.querySelector('.btn-select-all').textContent = allSelected ? '全員解除' : '全員選択';
+}
+
+function updateSelectedCount() {
+  const cnt = selectedMembers.size;
+  el('selected-count').textContent = cnt > 0 ? cnt + '人選択中' : 'タップして参加者を選んでね';
+  el('btn-to-roulette').disabled = cnt < 2;
+}
+
+function goToRoulette() {
+  const chips = el('preview-chips');
+  chips.innerHTML = '';
+  Array.from(selectedMembers).forEach(name => {
+    const c = document.createElement('span');
+    c.className = 'preview-chip';
+    c.textContent = name;
+    chips.appendChild(c);
+  });
+  el('roulette-subtitle').textContent = selectedMembers.size + '人でチーム分け！';
+  el('big-ball').className = 'big-ball';
+  el('big-ball').textContent = '⚽';
+  el('big-ball').style.animation = 'float 3s ease-in-out infinite';
+  el('btn-start-roulette').disabled = false;
+  showPage('roulette');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startRoulette() {
+  el('btn-start-roulette').disabled = true;
+  const ball = el('big-ball');
+  ball.style.animation = '';
+  ball.className = 'big-ball spinning';
+  let cnt = 0;
+  const si = setInterval(() => { ball.textContent = EMOJIS[cnt++ % EMOJIS.length]; }, 150);
+  let dots = 0;
+  const mi = setInterval(() => {
+    const msgs = ['チーム分け中','チーム分け中・','チーム分け中・・','チーム分け中・・・'];
+    el('roulette-subtitle').textContent = msgs[dots++ % 4];
+  }, 300);
+  setTimeout(() => {
+    clearInterval(si); clearInterval(mi);
+    ball.textContent = '🏆';
+    ball.className = 'big-ball';
+    ball.style.animation = 'float 3s ease-in-out infinite';
+    el('roulette-subtitle').textContent = '🎉 チーム決定！！';
+    const members = Array.from(selectedMembers);
+    const shuffled = shuffle(members);
+    const mid = Math.ceil(shuffled.length / 2);
+    teams = { a: shuffled.slice(0, mid), b: shuffled.slice(mid) };
+    launchConfetti();
+    setTimeout(() => { initMatch(); showPage('match'); el('btn-start-roulette').disabled = false; }, 800);
+  }, 2500);
+}
+
+function initMatch() {
+  outA = new Set(); outB = new Set();
+  el('match-badge').textContent = '第' + matchNum + '試合';
+  el('out-badge-a').textContent = '退場 0人';
+  el('out-badge-b').textContent = '退場 0人';
+  renderMatchGrid('a');
+  renderMatchGrid('b');
+  initStats([...teams.a, ...teams.b]);
+}
+
+function renderMatchGrid(team) {
+  const grid = el('btn-grid-' + team);
+  grid.innerHTML = '';
+  teams[team].forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'member-btn alive-' + team;
+    btn.textContent = name;
+    btn.onclick = () => toggleOut(team, name, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function toggleOut(team, name, btn) {
+  const set = team === 'a' ? outA : outB;
+  if (set.has(name)) { set.delete(name); btn.className = 'member-btn alive-' + team; btn.textContent = name; }
+  else { set.add(name); btn.className = 'member-btn out'; btn.textContent = name; }
+  el('out-badge-' + team).textContent = '退場 ' + (team === 'a' ? outA : outB).size + '人';
+}
+
+function initStats(members) {
+  members.forEach(name => {
+    if (!stats[name]) stats[name] = { win:0, lose:0, draw:0, survive:0, total:0 };
+  });
+}
+
+function finishMatch() {
+  const cntA = outA.size, cntB = outB.size;
+  let winner, winText, winEmoji;
+  if (cntA < cntB) { winner = 'A'; winText = 'チームA の勝ち！'; winEmoji = '🔴'; }
+  else if (cntB < cntA) { winner = 'B'; winText = 'チームB の勝ち！'; winEmoji = '🔵'; }
+  else { winner = 'draw'; winText = '引き分け！'; winEmoji = '🤝'; }
+
+  matchLogs.push({ num: matchNum, cntA, cntB, winner, teamA: [...teams.a], teamB: [...teams.b], outA: [...outA], outB: [...outB] });
+
+  [...teams.a].forEach(name => {
+    stats[name].total++;
+    if (winner === 'A') stats[name].win++;
+    else if (winner === 'B') stats[name].lose++;
+    else stats[name].draw++;
+    if (!outA.has(name)) stats[name].survive++;
+  });
+  [...teams.b].forEach(name => {
+    stats[name].total++;
+    if (winner === 'B') stats[name].win++;
+    else if (winner === 'A') stats[name].lose++;
+    else stats[name].draw++;
+    if (!outB.has(name)) stats[name].survive++;
+  });
+
+  el('win-emoji').textContent = winEmoji;
+  const wt = el('win-text');
+  wt.textContent = winText;
+  wt.className = 'win-text win-' + (winner === 'draw' ? 'draw' : winner.toLowerCase());
+  el('result-detail').textContent = `退場 チームA ${cntA}人 vs チームB ${cntB}人`;
+  el('out-names-a').textContent = outA.size > 0 ? [...outA].join('・') : 'なし';
+  el('out-names-b').textContent = outB.size > 0 ? [...outB].join('・') : 'なし';
+  el('save-status').textContent = '';
+
+  showPage('result');
+  if (winner !== 'draw') launchConfetti();
+  saveMatch(winner, cntA, cntB);
+}
+
+async function saveMatch(winner, cntA, cntB) {
+  el('save-status').textContent = '保存中...';
+  el('save-status').className = 'save-status saving';
+  try {
+    const data = {
+      matchNum,
+      teamA: teams.a,
+      teamB: teams.b,
+      outA: [...outA],
+      outB: [...outB],
+      winner
+    };
+    const url = GAS_URL + '?action=saveMatch&data=' + encodeURIComponent(JSON.stringify(data));
+    await fetch(url, { mode: 'cors' });
+    el('save-status').textContent = '✓ スプレッドシートに保存しました';
+    el('save-status').className = 'save-status saved';
+  } catch(e) {
+    el('save-status').textContent = '保存に失敗しました（後で確認してください）';
+    el('save-status').className = 'save-status error';
+  }
+}
+
+function continueMatch() {
+  matchNum++;
+  initMatch();
+  showPage('match');
+}
+
+function reshuffleMatch() {
+  matchNum++;
+  const all = [...teams.a, ...teams.b].sort(() => Math.random() - 0.5);
+  const mid = Math.ceil(all.length / 2);
+  teams = { a: all.slice(0, mid), b: all.slice(mid) };
+  launchConfetti();
+  setTimeout(() => { initMatch(); showPage('match'); }, 800);
+}
+
+function showSummary() {
+  el('match-log-list').innerHTML = matchLogs.map(log => {
+    const wc = log.winner === 'A' ? 'a' : log.winner === 'B' ? 'b' : 'draw';
+    const ws = log.winner === 'A' ? 'チームA勝ち' : log.winner === 'B' ? 'チームB勝ち' : '引き分け';
+    return `<div class="log-item"><span>第${log.num}試合 A:${log.cntA}人退場 B:${log.cntB}人退場</span><span class="log-win ${wc}">${ws}</span></div>`;
+  }).join('');
+
+  el('personal-stats').innerHTML = Object.keys(stats).map(name => {
+    const s = stats[name];
+    const winRate = s.total > 0 ? Math.round(s.win / s.total * 100) : 0;
+    const surviveRate = s.total > 0 ? Math.round(s.survive / s.total * 100) : 0;
+    return `<div class="stat-row">
+      <span class="stat-name">${name}</span>
+      <span class="stat-nums">${s.win}勝${s.lose}敗</span>
+      <div class="bar-wrap"><div class="bar-win" style="width:${winRate}%"></div></div>
+      <span class="stat-rate">${winRate}%</span>
+      <span class="survive-rate">${surviveRate}%</span>
+    </div>`;
+  }).join('');
+
+  showPage('summary');
+}
+
+function resetAll() {
+  selectedMembers = new Set();
+  allSelected = false;
+  teams = { a: [], b: [] };
+  outA = new Set(); outB = new Set();
+  matchNum = 1; matchLogs = []; stats = {};
+  document.querySelector('.btn-select-all').textContent = '全員選択';
+  renderMemberGrid();
+  showPage('select');
+}
+
+function launchConfetti() {
+  const wrap = el('confetti-wrap');
+  wrap.innerHTML = '';
+  const colors = ['#f97316','#ef4444','#3b82f6','#22c55e','#eab308','#a855f7','#ec4899'];
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    const size = 6 + Math.random() * 9;
+    p.style.width = size + 'px'; p.style.height = size + 'px';
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay = (Math.random() * 0.7) + 's';
+    wrap.appendChild(p);
+  }
+  setTimeout(() => { wrap.innerHTML = ''; }, 4500);
+}
+
+loadAllMembers();
+</script>
+</body>
+</html>
