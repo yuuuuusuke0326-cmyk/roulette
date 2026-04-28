@@ -554,25 +554,25 @@ function toggleOut(team, name, btn) {
 
 function renderHitList() {
   const all = [...teams.a, ...teams.b];
-  el('hit-list').innerHTML = all.map(name => {
+  el('hit-list').innerHTML = all.map((name, idx) => {
     const isParent = parentSet.has(name);
-    const safeId = 'hit-' + name.replace(/[^a-zA-Z0-9]/g, '_');
     return `<div class="hit-row">
       <span class="hit-name${isParent ? ' is-parent' : ''}">${isParent ? '👨 ' : ''}${name}</span>
       <div class="hit-counter">
-        <button class="hit-btn hit-btn-minus" onclick="changeHit('${name}', -1)">−</button>
-        <span class="hit-num" id="${safeId}">${hits[name] || 0}</span>
-        <button class="hit-btn hit-btn-plus" onclick="changeHit('${name}', 1)">＋</button>
+        <button class="hit-btn hit-btn-minus" onclick="changeHit(${idx}, -1)">−</button>
+        <span class="hit-num" id="hit-idx-${idx}">${hits[name] || 0}</span>
+        <button class="hit-btn hit-btn-plus" onclick="changeHit(${idx}, 1)">＋</button>
       </div>
     </div>`;
   }).join('');
   updateHitTotal();
 }
 
-function changeHit(name, delta) {
+function changeHit(idx, delta) {
+  const all = [...teams.a, ...teams.b];
+  const name = all[idx];
   hits[name] = Math.max(0, (hits[name] || 0) + delta);
-  const safeId = 'hit-' + name.replace(/[^a-zA-Z0-9]/g, '_');
-  const numEl = document.getElementById(safeId);
+  const numEl = document.getElementById('hit-idx-' + idx);
   if (numEl) {
     numEl.textContent = hits[name];
     numEl.className = 'hit-num' + (hits[name] > 0 ? ' has-hit' : '');
