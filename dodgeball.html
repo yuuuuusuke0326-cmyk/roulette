@@ -16,12 +16,7 @@
   @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
   @keyframes confetti-fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
 
-  .header {
-    padding: 1.25rem 1rem 1.5rem;
-    text-align: center;
-    border-radius: 0 0 24px 24px;
-    margin-bottom: 1.25rem;
-  }
+  .header { padding: 1.25rem 1rem 1.5rem; text-align: center; border-radius: 0 0 24px 24px; margin-bottom: 1.25rem; }
   .header.blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 4px 16px rgba(37,99,235,0.25); }
   .header.orange { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 4px 16px rgba(249,115,22,0.25); }
   .header h1 { color: white; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
@@ -31,7 +26,6 @@
   .page { display: none; animation: fadeIn 0.35s ease; }
   .page.active { display: block; }
 
-  /* ステップ */
   .steps { display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; }
   .step { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .step-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border: 2px solid #bfdbfe; background: white; color: #3b82f6; transition: all 0.3s; }
@@ -41,24 +35,30 @@
   .step-line { width: 28px; height: 2px; background: #bfdbfe; margin: 0 3px 18px; transition: background 0.3s; }
   .step-line.done { background: #22c55e; }
 
-  /* 共通カード */
   .card { background: white; border-radius: 16px; padding: 1rem; margin-bottom: 0.75rem; border: 1.5px solid #e0e7ff; }
 
-  /* メンバー選択 */
-  .select-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
-  .select-title { font-size: 15px; font-weight: 700; color: #1e40af; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .section-title { font-size: 14px; font-weight: 700; color: #1e40af; }
+  .section-title.green { color: #059669; }
+
   .btn-select-all { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; border: 1.5px solid #2563eb; background: white; color: #2563eb; cursor: pointer; }
   .btn-select-all:active { background: #eff6ff; }
 
-  .member-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .member-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 0.75rem; }
   .member-item { padding: 12px 8px; border-radius: 12px; border: 2px solid #bfdbfe; background: white; cursor: pointer; text-align: center; font-size: 14px; font-weight: 600; color: #1e40af; transition: all 0.15s; user-select: none; -webkit-tap-highlight-color: transparent; animation: pop 0.25s ease; }
   .member-item:active { transform: scale(0.96); }
   .member-item.selected { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: transparent; color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.35); }
   .member-item.selected::before { content: '✓ '; font-size: 12px; }
 
+  .parent-section { background: white; border-radius: 16px; padding: 1rem; margin-bottom: 0.75rem; border: 1.5px solid #d1fae5; }
+  .parent-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .parent-item { padding: 10px 8px; border-radius: 12px; border: 2px solid #6ee7b7; background: white; cursor: pointer; text-align: center; font-size: 13px; font-weight: 600; color: #059669; transition: all 0.15s; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .parent-item:active { transform: scale(0.96); }
+  .parent-item.selected { background: linear-gradient(135deg, #059669, #047857); border-color: transparent; color: white; box-shadow: 0 2px 8px rgba(5,150,105,0.35); }
+  .parent-item.selected::before { content: '✓ '; font-size: 11px; }
+
   .selected-count { text-align: center; font-size: 13px; color: #3b82f6; font-weight: 600; margin-bottom: 0.75rem; min-height: 20px; }
 
-  /* ルーレット */
   .ball-area { position: relative; height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; }
   .big-ball { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #f97316, #ef4444); display: flex; align-items: center; justify-content: center; font-size: 48px; animation: float 3s ease-in-out infinite; border: 4px solid rgba(255,255,255,0.5); box-shadow: 0 6px 20px rgba(249,115,22,0.3); }
   .big-ball.spinning { animation: spin 0.25s linear infinite; }
@@ -67,15 +67,13 @@
   .star:nth-child(2){top:4px;right:32px;animation-delay:0.4s}
   .star:nth-child(3){bottom:10px;left:16px;animation-delay:0.8s}
   .star:nth-child(4){bottom:6px;right:20px;animation-delay:1.2s}
-
   .roulette-subtitle { text-align: center; font-size: 14px; color: #b45309; font-weight: 600; margin-bottom: 1rem; min-height: 20px; }
-
   .preview-card { background: white; border-radius: 12px; padding: 0.75rem; margin-bottom: 0.75rem; border: 1.5px solid #fed7aa; }
   .preview-label { font-size: 11px; color: #9a3412; font-weight: 700; margin-bottom: 6px; }
   .preview-chips { display: flex; flex-wrap: wrap; gap: 5px; }
   .preview-chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+  .preview-chip.parent { background: #f0fdf4; border-color: #6ee7b7; color: #047857; }
 
-  /* チーム表示 */
   .teams-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
   .team-card { border-radius: 14px; padding: 0.875rem; }
   .team-a-card { background: #fff1f2; border: 2px solid #fca5a5; }
@@ -83,19 +81,37 @@
   .team-name { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
   .team-a-card .team-name { color: #dc2626; }
   .team-b-card .team-name { color: #2563eb; }
-
-  /* 試合入力 */
   .out-count-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 10px; float: right; }
   .team-a-card .out-count-badge { background: #fee2e2; color: #991b1b; }
   .team-b-card .out-count-badge { background: #dbeafe; color: #1e40af; }
-
-  .member-btn { width: 100%; padding: 9px 6px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-size: 13px; font-weight: 600; text-align: center; transition: all 0.15s; display: block; margin-bottom: 5px; -webkit-tap-highlight-color: transparent; }
+  .member-btn { width: 100%; padding: 9px 6px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; transition: all 0.15s; display: block; margin-bottom: 5px; -webkit-tap-highlight-color: transparent; }
   .member-btn:active { transform: scale(0.95); }
   .member-btn.alive-a { background: white; color: #dc2626; border-color: #fca5a5; }
   .member-btn.alive-b { background: white; color: #2563eb; border-color: #93c5fd; }
+  .member-btn.alive-a.is-parent { border-style: dashed; }
+  .member-btn.alive-b.is-parent { border-style: dashed; }
   .member-btn.out { background: #e5e7eb; color: #9ca3af; border-color: #d1d5db; text-decoration: line-through; }
 
-  /* 結果カード */
+  .hit-section { background: white; border-radius: 16px; border: 1.5px solid #e0e7ff; padding: 1rem; margin-bottom: 0.75rem; }
+  .hit-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .hit-title { font-size: 13px; font-weight: 700; color: #1e40af; }
+  .hit-total { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #dbeafe; color: #1e40af; }
+  .hit-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 0.5px solid #f3f4f6; }
+  .hit-row:last-child { border-bottom: none; }
+  .hit-name { font-size: 13px; font-weight: 600; color: #1f2937; flex: 1; }
+  .hit-name.is-parent { color: #059669; }
+  .hit-counter { display: flex; align-items: center; gap: 8px; }
+  .hit-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; flex-shrink: 0; }
+  .hit-btn:active { transform: scale(0.9); }
+  .hit-btn-minus { background: #f3f4f6; color: #6b7280; }
+  .hit-btn-plus { background: #2563eb; color: white; }
+  .hit-num { font-size: 16px; font-weight: 700; color: #9ca3af; min-width: 20px; text-align: center; }
+  .hit-num.has-hit { color: #2563eb; }
+
+  .divider { display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem; }
+  .divider-line { flex: 1; height: 1px; background: #e5e7eb; }
+  .divider-text { font-size: 11px; font-weight: 700; color: #9ca3af; white-space: nowrap; }
+
   .result-card { background: white; border-radius: 16px; border: 2px solid #e0e7ff; padding: 1.25rem; margin-bottom: 0.75rem; text-align: center; animation: fadeIn 0.4s ease; }
   .win-emoji { font-size: 36px; margin-bottom: 4px; }
   .win-text { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
@@ -112,7 +128,6 @@
   .out-box-b .out-box-label { color: #1e40af; }
   .out-box-names { color: #6b7280; font-size: 11px; line-height: 1.6; }
 
-  /* サマリー */
   .summary-title { font-size: 15px; font-weight: 700; color: #1f2937; margin-bottom: 12px; text-align: center; }
   .log-item { background: #f3f4f6; border-radius: 10px; padding: 8px 12px; margin-bottom: 6px; font-size: 12px; color: #6b7280; display: flex; justify-content: space-between; align-items: center; }
   .log-win { font-weight: 700; }
@@ -135,14 +150,11 @@
   .save-status.saved { color: #16a34a; }
   .save-status.error { color: #dc2626; }
 
-  /* 共通ボタン */
   .btn-primary { width: 100%; padding: 14px; border-radius: 50px; border: none; cursor: pointer; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; margin-bottom: 0.5rem; transition: transform 0.1s; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
   .btn-primary:active { transform: scale(0.97); }
   .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
   .btn-orange { width: 100%; padding: 14px; border-radius: 50px; border: none; cursor: pointer; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #f97316, #ef4444); color: white; margin-bottom: 0.5rem; transition: transform 0.1s; box-shadow: 0 4px 14px rgba(249,115,22,0.35); }
   .btn-orange:active { transform: scale(0.97); }
-  .btn-secondary { width: 100%; padding: 12px; border-radius: 50px; border: 2px solid #bfdbfe; background: white; color: #3b82f6; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 0.5rem; transition: all 0.15s; }
-  .btn-secondary:active { background: #eff6ff; }
   .btn-ghost { width: 100%; padding: 10px; border-radius: 50px; border: 2px solid #e5e7eb; background: transparent; color: #9ca3af; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 0.5rem; }
 
   .match-badge { text-align: center; margin-bottom: 0.75rem; }
@@ -167,7 +179,6 @@
 
 <div class="wrap">
 
-  <!-- ステップ -->
   <div class="steps" id="steps-area">
     <div class="step active" id="step1"><div class="step-circle">1</div><span class="step-label">メンバー</span></div>
     <div class="step-line" id="line1"></div>
@@ -182,11 +193,19 @@
   <div class="page active" id="page-select">
     <div id="select-loading" class="loading-msg">名簿を読み込み中...</div>
     <div id="select-content" style="display:none">
-      <div class="select-header">
-        <p class="select-title">👦 参加する子を選んでね</p>
+      <div class="section-header">
+        <p class="section-title">👦 参加する子を選んでね</p>
         <button class="btn-select-all" onclick="toggleSelectAll()">全員選択</button>
       </div>
       <div class="member-grid" id="member-grid"></div>
+
+      <div class="parent-section">
+        <div class="section-header">
+          <p class="section-title green">👨‍👩 参加する保護者を選んでね</p>
+        </div>
+        <div class="parent-grid" id="parent-grid"></div>
+      </div>
+
       <p class="selected-count" id="selected-count">タップして参加者を選んでね</p>
       <button class="btn-primary" id="btn-to-roulette" onclick="goToRoulette()" disabled>チーム分けへ →</button>
     </div>
@@ -211,7 +230,7 @@
   <!-- ページ3: 試合入力 -->
   <div class="page" id="page-match">
     <div class="match-badge"><span class="badge" id="match-badge">第1試合</span></div>
-    <p class="instruction">当てられた子をタップ！（もう一度タップで取り消し）</p>
+    <p class="instruction">当てられた人をタップ！（もう一度タップで取り消し）</p>
     <div class="teams-row">
       <div class="team-card team-a-card">
         <p class="team-name">🔴 チームA <span class="out-count-badge" id="out-badge-a">退場 0人</span></p>
@@ -222,6 +241,21 @@
         <div id="btn-grid-b"></div>
       </div>
     </div>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">与ヒット数を入力</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="hit-section">
+      <div class="hit-header">
+        <p class="hit-title">🎯 与ヒット数（相手を当てた数）</p>
+        <span class="hit-total" id="hit-total">合計 0</span>
+      </div>
+      <div id="hit-list"></div>
+    </div>
+
     <button class="btn-orange" onclick="finishMatch()">試合終了 → 勝敗を記録</button>
   </div>
 
@@ -249,7 +283,7 @@
       <div id="match-log-list"></div>
     </div>
     <div class="card">
-      <p class="summary-title">🏆 個人成績</p>
+      <p class="summary-title">🏆 本日の個人成績</p>
       <div class="stat-legend">
         <span class="legend-win">勝率</span>
         <span class="legend-survive">生存率</span>
@@ -262,16 +296,20 @@
 </div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzW9x4Iq_LAOr-WfXcdVYqL15lLIhheUQ0PBU4ZHkxFhL7vpTkH8fLy6NUvRhbsZU6y/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzExioH3WXkoG6zKgMY48xN58hDOTMocA2wiJUd7Fzw_jhYaLb9NIDpdsum5wMSAeXP/exec';
 const EMOJIS = ['⚽','🏀','🎾','🏐','🎯','🏆','⭐','🌟'];
 
 let allMembers = [];
+let allParents = [];
 let selectedMembers = new Set();
+let selectedParents = new Set();
 let allSelected = false;
 let isReshuffle = false;
 let teams = { a: [], b: [] };
+let parentSet = new Set();
 let outA = new Set();
 let outB = new Set();
+let hits = {};
 let matchNum = 1;
 let matchLogs = [];
 let stats = {};
@@ -292,7 +330,13 @@ function showPage(name) {
   for (let i = 1; i <= 3; i++) {
     el('line' + i).classList.toggle('done', i < cur);
   }
-  const headers = { select:['⚽ ドッジボール記録','メンバーを選んで試合を記録しよう','blue'], roulette:['🎯 チーム分けルーレット','スタートを押してね！','orange'], match:['⚽ 試合記録','当てられた子をタップしよう','blue'], result:['🏆 試合結果','次の試合へ進もう','blue'], summary:['📊 本日の結果','お疲れ様でした！','blue'] };
+  const headers = {
+    select:  ['⚽ ドッジボール記録','メンバーを選んで試合を記録しよう','blue'],
+    roulette:['🎯 チーム分けルーレット','スタートを押してね！','orange'],
+    match:   ['⚽ 試合記録','当てられた人をタップしよう','blue'],
+    result:  ['🏆 試合結果','次の試合へ進もう','blue'],
+    summary: ['📊 本日の結果','お疲れ様でした！','blue']
+  };
   const h = headers[name] || headers.select;
   el('header-title').textContent = h[0];
   el('header-sub').textContent = h[1];
@@ -303,9 +347,14 @@ function showPage(name) {
 
 async function loadAllMembers() {
   try {
-    const res = await fetch(GAS_URL + '?action=getAllMembers', { mode: 'cors' });
-    const data = await res.json();
-    allMembers = data.members || [];
+    const [membersRes, parentsRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getAllMembers', { mode: 'cors' }),
+      fetch(GAS_URL + '?action=getParents', { mode: 'cors' })
+    ]);
+    const membersData = await membersRes.json();
+    const parentsData = await parentsRes.json();
+    allMembers = membersData.members || [];
+    allParents = parentsData.parents || [];
     if (allMembers.length === 0) {
       el('select-loading').style.display = 'none';
       el('select-error').innerHTML = '<p class="error-msg">名簿にメンバーがいません</p>';
@@ -314,6 +363,7 @@ async function loadAllMembers() {
     el('select-loading').style.display = 'none';
     el('select-content').style.display = 'block';
     renderMemberGrid();
+    renderParentGrid();
   } catch(e) {
     el('select-loading').style.display = 'none';
     el('select-error').innerHTML = '<p class="error-msg">読み込みに失敗しました。再読み込みしてください。</p>';
@@ -338,6 +388,24 @@ function renderMemberGrid() {
   updateSelectedCount();
 }
 
+function renderParentGrid() {
+  const grid = el('parent-grid');
+  grid.innerHTML = '';
+  allParents.forEach((p, i) => {
+    const name = p.parentName;
+    const div = document.createElement('div');
+    div.className = 'parent-item' + (selectedParents.has(name) ? ' selected' : '');
+    div.textContent = name;
+    div.style.animationDelay = (i * 0.04) + 's';
+    div.onclick = () => {
+      if (selectedParents.has(name)) { selectedParents.delete(name); div.classList.remove('selected'); }
+      else { selectedParents.add(name); div.classList.add('selected'); }
+      updateSelectedCount();
+    };
+    grid.appendChild(div);
+  });
+}
+
 function toggleSelectAll() {
   allSelected = !allSelected;
   allSelected ? allMembers.forEach(n => selectedMembers.add(n)) : selectedMembers.clear();
@@ -346,9 +414,19 @@ function toggleSelectAll() {
 }
 
 function updateSelectedCount() {
-  const cnt = selectedMembers.size;
-  el('selected-count').textContent = cnt > 0 ? cnt + '人選択中' : 'タップして参加者を選んでね';
-  el('btn-to-roulette').disabled = cnt < 2;
+  const childCnt = selectedMembers.size;
+  const parentCnt = selectedParents.size;
+  const total = childCnt + parentCnt;
+  let text = '';
+  if (total > 0) {
+    text = `子ども ${childCnt}人`;
+    if (parentCnt > 0) text += ` + 保護者 ${parentCnt}人`;
+    text += ' 選択中';
+  } else {
+    text = 'タップして参加者を選んでね';
+  }
+  el('selected-count').textContent = text;
+  el('btn-to-roulette').disabled = total < 2;
 }
 
 function goToRoulette() {
@@ -360,11 +438,20 @@ function goToRoulette() {
     c.textContent = name;
     chips.appendChild(c);
   });
-  el('roulette-subtitle').textContent = selectedMembers.size + '人でチーム分け！';
+  Array.from(selectedParents).forEach(name => {
+    const c = document.createElement('span');
+    c.className = 'preview-chip parent';
+    c.textContent = name;
+    chips.appendChild(c);
+  });
+  const total = selectedMembers.size + selectedParents.size;
+  el('roulette-subtitle').textContent = total + '人でチーム分け！';
   el('big-ball').className = 'big-ball';
   el('big-ball').textContent = '⚽';
   el('big-ball').style.animation = 'float 3s ease-in-out infinite';
   el('btn-start-roulette').disabled = false;
+  el('btn-back-from-roulette').style.display = '';
+  isReshuffle = false;
   showPage('roulette');
 }
 
@@ -375,6 +462,18 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+function splitTeamsWithParents(children, parents) {
+  const shuffledParents = shuffle(parents);
+  const pMid = Math.ceil(shuffledParents.length / 2);
+  const parentsA = shuffledParents.slice(0, pMid);
+  const parentsB = shuffledParents.slice(pMid);
+  const shuffledChildren = shuffle(children);
+  const cMid = Math.ceil(shuffledChildren.length / 2);
+  const childrenA = shuffledChildren.slice(0, cMid);
+  const childrenB = shuffledChildren.slice(cMid);
+  return { a: [...parentsA, ...childrenA], b: [...parentsB, ...childrenB] };
 }
 
 function startRoulette() {
@@ -397,16 +496,14 @@ function startRoulette() {
     el('roulette-subtitle').textContent = '🎉 チーム決定！！';
 
     if (isReshuffle) {
-      const all = [...teams.a, ...teams.b].sort(() => Math.random() - 0.5);
-      const mid = Math.ceil(all.length / 2);
-      teams = { a: all.slice(0, mid), b: all.slice(mid) };
+      const currentParents = [...teams.a, ...teams.b].filter(n => parentSet.has(n));
+      const currentChildren = [...teams.a, ...teams.b].filter(n => !parentSet.has(n));
+      teams = splitTeamsWithParents(currentChildren, currentParents);
       isReshuffle = false;
       el('btn-back-from-roulette').style.display = '';
     } else {
-      const members = Array.from(selectedMembers);
-      const shuffled = shuffle(members);
-      const mid = Math.ceil(shuffled.length / 2);
-      teams = { a: shuffled.slice(0, mid), b: shuffled.slice(mid) };
+      parentSet = new Set(Array.from(selectedParents));
+      teams = splitTeamsWithParents(Array.from(selectedMembers), Array.from(selectedParents));
     }
 
     launchConfetti();
@@ -416,11 +513,14 @@ function startRoulette() {
 
 function initMatch() {
   outA = new Set(); outB = new Set();
+  hits = {};
+  [...teams.a, ...teams.b].forEach(name => hits[name] = 0);
   el('match-badge').textContent = '第' + matchNum + '試合';
   el('out-badge-a').textContent = '退場 0人';
   el('out-badge-b').textContent = '退場 0人';
   renderMatchGrid('a');
   renderMatchGrid('b');
+  renderHitList();
   initStats([...teams.a, ...teams.b]);
 }
 
@@ -428,9 +528,10 @@ function renderMatchGrid(team) {
   const grid = el('btn-grid-' + team);
   grid.innerHTML = '';
   teams[team].forEach(name => {
+    const isParent = parentSet.has(name);
     const btn = document.createElement('button');
-    btn.className = 'member-btn alive-' + team;
-    btn.textContent = name;
+    btn.className = 'member-btn alive-' + team + (isParent ? ' is-parent' : '');
+    btn.textContent = (isParent ? '👨 ' : '') + name;
     btn.onclick = () => toggleOut(team, name, btn);
     grid.appendChild(btn);
   });
@@ -438,9 +539,50 @@ function renderMatchGrid(team) {
 
 function toggleOut(team, name, btn) {
   const set = team === 'a' ? outA : outB;
-  if (set.has(name)) { set.delete(name); btn.className = 'member-btn alive-' + team; btn.textContent = name; }
-  else { set.add(name); btn.className = 'member-btn out'; btn.textContent = name; }
+  const isParent = parentSet.has(name);
+  if (set.has(name)) {
+    set.delete(name);
+    btn.className = 'member-btn alive-' + team + (isParent ? ' is-parent' : '');
+    btn.textContent = (isParent ? '👨 ' : '') + name;
+  } else {
+    set.add(name);
+    btn.className = 'member-btn out';
+    btn.textContent = (isParent ? '👨 ' : '') + name;
+  }
   el('out-badge-' + team).textContent = '退場 ' + (team === 'a' ? outA : outB).size + '人';
+}
+
+function renderHitList() {
+  const all = [...teams.a, ...teams.b];
+  el('hit-list').innerHTML = all.map(name => {
+    const isParent = parentSet.has(name);
+    const safeId = 'hit-' + name.replace(/[^a-zA-Z0-9]/g, '_');
+    return `<div class="hit-row">
+      <span class="hit-name${isParent ? ' is-parent' : ''}">${isParent ? '👨 ' : ''}${name}</span>
+      <div class="hit-counter">
+        <button class="hit-btn hit-btn-minus" onclick="changeHit('${name}', -1)">−</button>
+        <span class="hit-num" id="${safeId}">${hits[name] || 0}</span>
+        <button class="hit-btn hit-btn-plus" onclick="changeHit('${name}', 1)">＋</button>
+      </div>
+    </div>`;
+  }).join('');
+  updateHitTotal();
+}
+
+function changeHit(name, delta) {
+  hits[name] = Math.max(0, (hits[name] || 0) + delta);
+  const safeId = 'hit-' + name.replace(/[^a-zA-Z0-9]/g, '_');
+  const numEl = document.getElementById(safeId);
+  if (numEl) {
+    numEl.textContent = hits[name];
+    numEl.className = 'hit-num' + (hits[name] > 0 ? ' has-hit' : '');
+  }
+  updateHitTotal();
+}
+
+function updateHitTotal() {
+  const total = Object.values(hits).reduce((s, v) => s + v, 0);
+  el('hit-total').textContent = '合計 ' + total;
 }
 
 function initStats(members) {
@@ -484,10 +626,10 @@ function finishMatch() {
 
   showPage('result');
   if (winner !== 'draw') launchConfetti();
-  saveMatch(winner, cntA, cntB);
+  saveMatch(winner);
 }
 
-async function saveMatch(winner, cntA, cntB) {
+async function saveMatch(winner) {
   el('save-status').textContent = '保存中...';
   el('save-status').className = 'save-status saving';
   try {
@@ -497,7 +639,9 @@ async function saveMatch(winner, cntA, cntB) {
       teamB: teams.b,
       outA: [...outA],
       outB: [...outB],
-      winner
+      winner,
+      hits,
+      parents: Array.from(parentSet)
     };
     const url = GAS_URL + '?action=saveMatch&data=' + encodeURIComponent(JSON.stringify(data));
     await fetch(url, { mode: 'cors' });
@@ -519,14 +663,14 @@ function goToReshuffle() {
   matchNum++;
   const chips = el('preview-chips');
   chips.innerHTML = '';
-  const all = [...teams.a, ...teams.b];
-  all.forEach(name => {
+  [...teams.a, ...teams.b].forEach(name => {
     const c = document.createElement('span');
-    c.className = 'preview-chip';
+    c.className = 'preview-chip' + (parentSet.has(name) ? ' parent' : '');
     c.textContent = name;
     chips.appendChild(c);
   });
-  el('roulette-subtitle').textContent = all.length + '人でチーム組み直し！';
+  const total = teams.a.length + teams.b.length;
+  el('roulette-subtitle').textContent = total + '人でチーム組み直し！';
   el('big-ball').className = 'big-ball';
   el('big-ball').textContent = '⚽';
   el('big-ball').style.animation = 'float 3s ease-in-out infinite';
@@ -536,14 +680,6 @@ function goToReshuffle() {
   showPage('roulette');
 }
 
-function reshuffleMatch() {
-  const all = [...teams.a, ...teams.b].sort(() => Math.random() - 0.5);
-  const mid = Math.ceil(all.length / 2);
-  teams = { a: all.slice(0, mid), b: all.slice(mid) };
-  launchConfetti();
-  setTimeout(() => { initMatch(); showPage('match'); }, 800);
-}
-
 function showSummary() {
   el('match-log-list').innerHTML = matchLogs.map(log => {
     const wc = log.winner === 'A' ? 'a' : log.winner === 'B' ? 'b' : 'draw';
@@ -551,7 +687,8 @@ function showSummary() {
     return `<div class="log-item"><span>第${log.num}試合 A:${log.cntA}人退場 B:${log.cntB}人退場</span><span class="log-win ${wc}">${ws}</span></div>`;
   }).join('');
 
-  el('personal-stats').innerHTML = Object.keys(stats).map(name => {
+  const childStats = Object.keys(stats).filter(name => !parentSet.has(name));
+  el('personal-stats').innerHTML = childStats.map(name => {
     const s = stats[name];
     const winRate = s.total > 0 ? Math.round(s.win / s.total * 100) : 0;
     const surviveRate = s.total > 0 ? Math.round(s.survive / s.total * 100) : 0;
@@ -569,12 +706,16 @@ function showSummary() {
 
 function resetAll() {
   selectedMembers = new Set();
+  selectedParents = new Set();
   allSelected = false;
+  parentSet = new Set();
   teams = { a: [], b: [] };
   outA = new Set(); outB = new Set();
+  hits = {};
   matchNum = 1; matchLogs = []; stats = {};
   document.querySelector('.btn-select-all').textContent = '全員選択';
   renderMemberGrid();
+  renderParentGrid();
   showPage('select');
 }
 
