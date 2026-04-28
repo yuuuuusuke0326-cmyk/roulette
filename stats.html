@@ -345,7 +345,7 @@
       <!-- マトリクス -->
       <div class="sub-page" id="sub-matrix">
         <div class="legend-row">
-          <div class="legend-item"><div class="legend-dot" style="background:#d1fae5;border:1px solid #059669"></div>70%以上</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#d1fae5;border:1px solid #059669"></div>60%以上</div>
           <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1px solid #2563eb"></div>40〜69%</div>
           <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;border:1px solid #dc2626"></div>39%以下</div>
         </div>
@@ -410,20 +410,23 @@ async function loadAll() {
 function buildPairStats() {
   pairStats = {};
   const matchMap = {};
+
   matchRecords.forEach(r => {
     const key = r.date + '-' + r.matchNum;
-    if (!matchMap[key]) matchMap[key] = { A: [], B: [], result: r.result };
+    if (!matchMap[key]) matchMap[key] = { A: [], B: [] };
     matchMap[key][r.team].push({ name: r.name, result: r.result });
   });
 
   Object.values(matchMap).forEach(match => {
     ['A', 'B'].forEach(team => {
-      const members = matchMap[Object.keys(matchMap).find(k => matchMap[k] === match)];
-      const teamMembers = match[team].map(m => m.name);
-      const won = match[team][0]?.result === '勝ち';
-      for (let i = 0; i < teamMembers.length; i++) {
-        for (let j = i + 1; j < teamMembers.length; j++) {
-          const key = [teamMembers[i], teamMembers[j]].sort().join('|');
+      const teamMembers = match[team];
+      if (teamMembers.length < 2) return;
+      const won = teamMembers[0]?.result === '勝ち';
+      const names = teamMembers.map(m => m.name);
+      for (let i = 0; i < names.length; i++) {
+        for (let j = i + 1; j < names.length; j++) {
+          if (names[i] === names[j]) continue;
+          const key = [names[i], names[j]].sort().join('|');
           if (!pairStats[key]) pairStats[key] = { win: 0, total: 0 };
           pairStats[key].total++;
           if (won) pairStats[key].win++;
@@ -440,7 +443,7 @@ function getRate(key) {
 
 function getRateClass(r) {
   if (r === null) return 'none';
-  return r >= 70 ? 'high' : r >= 40 ? 'mid' : 'low';
+  return r >= 60 ? 'high' : r >= 40 ? 'mid' : 'low';
 }
 
 function renderPersonal() {
@@ -519,7 +522,7 @@ function getPairs() {
     const rate = Math.round(s.win / s.total * 100);
     return { key, a, b, rate, total: s.total };
   }).filter(p => {
-    if (filterKey === 'high') return p.rate >= 70;
+    if (filterKey === 'high') return p.rate >= 60;
     if (filterKey === 'low') return p.rate < 40;
     return true;
   }).sort((a, b) => b.rate - a.rate);
