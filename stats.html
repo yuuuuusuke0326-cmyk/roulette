@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="成績分析">
+<title>成績・相性分析</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f0f9ff; min-height: 100vh; padding-bottom: 3rem; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+
+  .header {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    padding: 1.25rem 1rem 1.5rem;
+    text-align: center;
+    border-radius: 0 0 24px 24px;
+    margin-bottom: 0;
+    box-shadow: 0 4px 16px rgba(29,78,216,0.25);
+  }
+  .header h1 { color: white; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  .header p { color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 4px; }
+
+  .main-tab-row {
+    display: flex;
+    background: white;
+    border-bottom: 0.5px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .main-tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #9ca3af;
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.15s;
+  }
+  .main-tab.active { color: #1d4ed8; border-bottom-color: #1d4ed8; }
+
+  .wrap { padding: 1rem; max-width: 480px; margin: 0 auto; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .metric-card {
+    background: white;
+    border-radius: 14px;
+    padding: 0.875rem;
+    text-align: center;
+    border: 1.5px solid #e0e7ff;
+  }
+  .metric-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; font-weight: 600; }
+  .metric-value { font-size: 24px; font-weight: 700; color: #1e40af; }
+  .metric-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+  .sort-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .sort-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1.5px solid #bfdbfe;
+    background: white;
+    color: #3b82f6;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .sort-btn.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .player-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+
+  .player-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1rem;
+    border: 1.5px solid #e0e7ff;
+    animation: pop 0.3s ease;
+    transition: border-color 0.15s;
+  }
+
+  .player-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .rank-badge {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .rank-1 { background: #fef9c3; color: #854d0e; }
+  .rank-2 { background: #f1f5f9; color: #475569; }
+  .rank-3 { background: #fff7ed; color: #9a3412; }
+  .rank-n { background: #f3f4f6; color: #9ca3af; }
+
+  .player-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #dbeafe;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #1e40af;
+    flex-shrink: 0;
+  }
+
+  .player-info { flex: 1; }
+  .player-name { font-size: 15px; font-weight: 700; color: #1f2937; }
+  .player-games { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+
+  .win-badge {
+    font-size: 13px; font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .win-high { background: #dcfce7; color: #166534; }
+  .win-mid  { background: #dbeafe; color: #1e40af; }
+  .win-low  { background: #fee2e2; color: #991b1b; }
+
+  .bars-area { display: flex; flex-direction: column; gap: 6px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-label { font-size: 11px; color: #6b7280; width: 44px; flex-shrink: 0; font-weight: 600; }
+  .bar-wrap { flex: 1; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .bar-win { background: #2563eb; }
+  .bar-survive { background: #059669; }
+  .bar-hit { background: #d97706; }
+  .bar-rate { font-size: 12px; font-weight: 700; min-width: 36px; text-align: right; }
+  .rate-win { color: #2563eb; }
+  .rate-survive { color: #059669; }
+  .rate-soon { color: #d1d5db; }
+
+  .coming-soon {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #f3f4f6;
+    color: #9ca3af;
+    margin-left: 4px;
+    font-weight: 600;
+  }
+
+  /* 相性分析 */
+  .sub-tab-row {
+    display: flex;
+    background: white;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 1rem;
+    border: 1.5px solid #e0e7ff;
+    gap: 4px;
+  }
+  .sub-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .sub-tab.active { background: #1d4ed8; color: white; }
+
+  .sub-page { display: none; }
+  .sub-page.active { display: block; animation: fadeIn 0.3s ease; }
+
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1.5px solid #bfdbfe;
+    background: white;
+    color: #3b82f6;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .filter-btn.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+
+  .pair-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+  .pair-card {
+    background: white;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pair-names { font-size: 13px; font-weight: 700; color: #1f2937; flex: 1; }
+  .pair-games { font-size: 11px; color: #9ca3af; min-width: 32px; text-align: right; }
+  .pair-bar-wrap { width: 72px; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+  .pair-bar { height: 100%; border-radius: 3px; }
+  .pair-bar.high { background: #059669; }
+  .pair-bar.mid  { background: #2563eb; }
+  .pair-bar.low  { background: #dc2626; }
+  .pair-rate { font-size: 13px; font-weight: 700; min-width: 36px; text-align: right; }
+  .pair-rate.high { color: #059669; }
+  .pair-rate.mid  { color: #2563eb; }
+  .pair-rate.low  { color: #dc2626; }
+
+  .legend-row { display: flex; gap: 10px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7280; font-weight: 600; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  .matrix-wrap { overflow-x: auto; margin-bottom: 1rem; background: white; border-radius: 14px; padding: 0.75rem; border: 1.5px solid #e0e7ff; }
+  .matrix-table { border-collapse: collapse; font-size: 10px; }
+  .matrix-table th { font-weight: 700; color: #6b7280; padding: 3px 5px; text-align: center; white-space: nowrap; }
+  .matrix-table td { width: 36px; height: 32px; text-align: center; font-size: 10px; font-weight: 700; border-radius: 4px; }
+  .name-cell { text-align: right; padding-right: 8px; color: #6b7280; background: transparent; white-space: nowrap; }
+  .cell-self { background: #f9fafb; color: #d1d5db; }
+  .cell-high { background: #d1fae5; color: #064e3b; }
+  .cell-mid  { background: #dbeafe; color: #1e3a8a; }
+  .cell-low  { background: #fee2e2; color: #7f1d1d; }
+  .cell-none { background: #f9fafb; color: #d1d5db; font-size: 9px; }
+
+  .player-select {
+    width: 100%; margin-bottom: 0.75rem;
+    font-size: 14px; padding: 10px 12px;
+    border-radius: 12px;
+    border: 1.5px solid #bfdbfe;
+    background: white;
+    color: #1f2937;
+    font-weight: 600;
+  }
+
+  .bw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
+  .bw-box { border-radius: 12px; padding: 10px 12px; }
+  .bw-box.best { background: #d1fae5; border: 1.5px solid #6ee7b7; }
+  .bw-box.worst { background: #fee2e2; border: 1.5px solid #fca5a5; }
+  .bw-label { font-size: 10px; font-weight: 700; margin-bottom: 4px; }
+  .bw-box.best .bw-label { color: #059669; }
+  .bw-box.worst .bw-label { color: #dc2626; }
+  .bw-name { font-size: 14px; font-weight: 700; color: #1f2937; margin-bottom: 2px; }
+  .bw-rate { font-size: 12px; font-weight: 600; }
+  .bw-box.best .bw-rate { color: #059669; }
+  .bw-box.worst .bw-rate { color: #dc2626; }
+
+  .loading-msg { text-align: center; font-size: 14px; color: #3b82f6; font-weight: 600; padding: 2rem 0; }
+  .error-msg { text-align: center; color: #dc2626; font-size: 13px; padding: 0.75rem; background: #fff1f2; border-radius: 12px; border: 1px solid #fca5a5; margin-bottom: 1rem; }
+
+  .empty-msg { text-align: center; color: #9ca3af; font-size: 13px; padding: 2rem 0; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 成績・相性分析</h1>
+  <p id="header-sub">読み込み中...</p>
+</div>
+
+<div class="main-tab-row">
+  <div class="main-tab active" onclick="switchMainTab('personal')">🏆 個人成績</div>
+  <div class="main-tab" onclick="switchMainTab('compat')">🤝 相性分析</div>
+</div>
+
+<div class="wrap">
+
+  <!-- 個人成績ページ -->
+  <div class="page active" id="page-personal">
+    <div id="personal-loading" class="loading-msg">データを読み込み中...</div>
+    <div id="personal-content" style="display:none">
+      <div class="summary-grid">
+        <div class="metric-card">
+          <p class="metric-label">総試合数</p>
+          <p class="metric-value" id="total-matches">-</p>
+          <p class="metric-sub">今シーズン</p>
+        </div>
+        <div class="metric-card">
+          <p class="metric-label">参加人数</p>
+          <p class="metric-value" id="total-players">-</p>
+          <p class="metric-sub">登録メンバー</p>
+        </div>
+      </div>
+
+      <div class="sort-row">
+        <button class="sort-btn active" onclick="setSort('win', this)">勝率順</button>
+        <button class="sort-btn" onclick="setSort('survive', this)">生存率順</button>
+        <button class="sort-btn" onclick="setSort('games', this)">試合数順</button>
+      </div>
+
+      <p class="section-label">個人成績一覧</p>
+      <div class="player-list" id="player-list"></div>
+    </div>
+    <div id="personal-error"></div>
+  </div>
+
+  <!-- 相性分析ページ -->
+  <div class="page" id="page-compat">
+    <div id="compat-loading" class="loading-msg">データを読み込み中...</div>
+    <div id="compat-content" style="display:none">
+      <div class="sub-tab-row">
+        <div class="sub-tab active" onclick="switchSubTab('ranking')">ランキング</div>
+        <div class="sub-tab" onclick="switchSubTab('matrix')">マトリクス</div>
+        <div class="sub-tab" onclick="switchSubTab('player')">個人別</div>
+      </div>
+
+      <!-- ランキング -->
+      <div class="sub-page active" id="sub-ranking">
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setFilter('all', this)">全て</button>
+          <button class="filter-btn" onclick="setFilter('high', this)">相性良い</button>
+          <button class="filter-btn" onclick="setFilter('low', this)">相性悪い</button>
+        </div>
+        <p class="section-label">同じチームだった時の勝率</p>
+        <div class="pair-list" id="pair-list"></div>
+      </div>
+
+      <!-- マトリクス -->
+      <div class="sub-page" id="sub-matrix">
+        <div class="legend-row">
+          <div class="legend-item"><div class="legend-dot" style="background:#d1fae5;border:1px solid #059669"></div>70%以上</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1px solid #2563eb"></div>40〜69%</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;border:1px solid #dc2626"></div>39%以下</div>
+        </div>
+        <div class="matrix-wrap">
+          <table class="matrix-table" id="matrix-table"></table>
+        </div>
+      </div>
+
+      <!-- 個人別 -->
+      <div class="sub-page" id="sub-player">
+        <select class="player-select" id="player-select" onchange="renderPlayerDetail()">
+          <option value="">-- 選手を選んでね --</option>
+        </select>
+        <div id="player-detail"></div>
+      </div>
+    </div>
+    <div id="compat-error"></div>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbz-A5h-o03l405lDbPeDTm81khWaKbJfmKza-4a5f3Ajw2r6rQ1LipKxGsRuK8yQW6O/exec';
+
+let personalStats = [];
+let matchRecords = [];
+let pairStats = {};
+let sortKey = 'win';
+let filterKey = 'all';
+
+function el(id) { return document.getElementById(id); }
+
+async function loadAll() {
+  try {
+    const [statsRes, detailRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getPersonalStats', { mode: 'cors' }),
+      fetch(GAS_URL + '?action=getMatchDetail', { mode: 'cors' })
+    ]);
+    const statsData = await statsRes.json();
+    const detailData = await detailRes.json();
+
+    personalStats = statsData.stats || [];
+    matchRecords = detailData.records || [];
+
+    buildPairStats();
+    renderPersonal();
+    renderCompat();
+
+    const maxMatches = personalStats.length > 0 ? Math.max(...personalStats.map(s => s.total)) : 0;
+    el('total-matches').textContent = maxMatches;
+    el('total-players').textContent = personalStats.length + '人';
+    el('header-sub').textContent = `${personalStats.length}人 / ${maxMatches}試合のデータ`;
+
+  } catch(e) {
+    el('personal-loading').style.display = 'none';
+    el('personal-error').innerHTML = '<p class="error-msg">データの読み込みに失敗しました</p>';
+    el('compat-loading').style.display = 'none';
+    el('compat-error').innerHTML = '<p class="error-msg">データの読み込みに失敗しました</p>';
+  }
+}
+
+function buildPairStats() {
+  pairStats = {};
+  const matchMap = {};
+  matchRecords.forEach(r => {
+    const key = r.date + '-' + r.matchNum;
+    if (!matchMap[key]) matchMap[key] = { A: [], B: [], result: r.result };
+    matchMap[key][r.team].push({ name: r.name, result: r.result });
+  });
+
+  Object.values(matchMap).forEach(match => {
+    ['A', 'B'].forEach(team => {
+      const members = matchMap[Object.keys(matchMap).find(k => matchMap[k] === match)];
+      const teamMembers = match[team].map(m => m.name);
+      const won = match[team][0]?.result === '勝ち';
+      for (let i = 0; i < teamMembers.length; i++) {
+        for (let j = i + 1; j < teamMembers.length; j++) {
+          const key = [teamMembers[i], teamMembers[j]].sort().join('|');
+          if (!pairStats[key]) pairStats[key] = { win: 0, total: 0 };
+          pairStats[key].total++;
+          if (won) pairStats[key].win++;
+        }
+      }
+    });
+  });
+}
+
+function getRate(key) {
+  const s = pairStats[key];
+  return s && s.total > 0 ? Math.round(s.win / s.total * 100) : null;
+}
+
+function getRateClass(r) {
+  if (r === null) return 'none';
+  return r >= 70 ? 'high' : r >= 40 ? 'mid' : 'low';
+}
+
+function renderPersonal() {
+  el('personal-loading').style.display = 'none';
+
+  if (personalStats.length === 0) {
+    el('personal-content').style.display = 'block';
+    el('player-list').innerHTML = '<p class="empty-msg">まだデータがありません<br>試合を記録してね！</p>';
+    return;
+  }
+
+  el('personal-content').style.display = 'block';
+  renderPlayerList();
+}
+
+function setSort(key, btn) {
+  sortKey = key;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPlayerList();
+}
+
+function renderPlayerList() {
+  const sorted = [...personalStats].sort((a, b) => {
+    if (sortKey === 'win') return b.winRate - a.winRate;
+    if (sortKey === 'survive') return b.surviveRate - a.surviveRate;
+    return b.total - a.total;
+  });
+
+  el('player-list').innerHTML = sorted.map((p, i) => {
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const winBadgeClass = p.winRate >= 70 ? 'win-high' : p.winRate >= 50 ? 'win-mid' : 'win-low';
+    return `<div class="player-card">
+      <div class="player-card-top">
+        <div class="rank-badge ${rankClass}">${i + 1}</div>
+        <div class="player-avatar">${p.name.slice(0, 2)}</div>
+        <div class="player-info">
+          <p class="player-name">${p.name}</p>
+          <p class="player-games">${p.total}試合 ${p.win}勝</p>
+        </div>
+        <span class="win-badge ${winBadgeClass}">${p.winRate}%</span>
+      </div>
+      <div class="bars-area">
+        <div class="bar-row">
+          <span class="bar-label">勝率</span>
+          <div class="bar-wrap"><div class="bar-fill bar-win" style="width:${p.winRate}%"></div></div>
+          <span class="bar-rate rate-win">${p.winRate}%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">生存率</span>
+          <div class="bar-wrap"><div class="bar-fill bar-survive" style="width:${p.surviveRate}%"></div></div>
+          <span class="bar-rate rate-survive">${p.surviveRate}%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">与ヒット<span class="coming-soon">準備中</span></span>
+          <div class="bar-wrap"><div class="bar-fill bar-hit" style="width:0%"></div></div>
+          <span class="bar-rate rate-soon">-</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCompat() {
+  el('compat-loading').style.display = 'none';
+  el('compat-content').style.display = 'block';
+  renderPairs();
+  renderMatrix();
+  renderPlayerSelect();
+}
+
+function getPairs() {
+  return Object.keys(pairStats).map(key => {
+    const [a, b] = key.split('|');
+    const s = pairStats[key];
+    const rate = Math.round(s.win / s.total * 100);
+    return { key, a, b, rate, total: s.total };
+  }).filter(p => {
+    if (filterKey === 'high') return p.rate >= 70;
+    if (filterKey === 'low') return p.rate < 40;
+    return true;
+  }).sort((a, b) => b.rate - a.rate);
+}
+
+function setFilter(f, btn) {
+  filterKey = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPairs();
+}
+
+function renderPairs() {
+  const pairs = getPairs();
+  if (pairs.length === 0) {
+    el('pair-list').innerHTML = '<p class="empty-msg">データがありません</p>';
+    return;
+  }
+  el('pair-list').innerHTML = pairs.map((p, i) => {
+    const rc = getRateClass(p.rate);
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    return `<div class="pair-card">
+      <div class="rank-badge ${rankClass}">${i + 1}</div>
+      <span class="pair-names">${p.a} &amp; ${p.b}</span>
+      <span class="pair-games">${p.total}試合</span>
+      <div class="pair-bar-wrap"><div class="pair-bar ${rc}" style="width:${p.rate}%"></div></div>
+      <span class="pair-rate ${rc}">${p.rate}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderMatrix() {
+  const names = personalStats.map(p => p.name);
+  if (names.length === 0) return;
+  let html = '<tr><th></th>' + names.map(n => `<th>${n.slice(0, 3)}</th>`).join('') + '</tr>';
+  names.forEach(row => {
+    html += `<tr><td class="name-cell">${row}</td>`;
+    names.forEach(col => {
+      if (row === col) { html += `<td class="cell-self">—</td>`; return; }
+      const rate = getRate([row, col].sort().join('|'));
+      if (rate === null) { html += `<td class="cell-none">-</td>`; return; }
+      html += `<td class="cell-${getRateClass(rate)}">${rate}%</td>`;
+    });
+    html += '</tr>';
+  });
+  el('matrix-table').innerHTML = html;
+}
+
+function renderPlayerSelect() {
+  const sel = el('player-select');
+  personalStats.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.name; opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+}
+
+function renderPlayerDetail() {
+  const name = el('player-select').value;
+  const detail = el('player-detail');
+  if (!name) { detail.innerHTML = ''; return; }
+
+  const others = personalStats.map(p => p.name).filter(n => n !== name);
+  const pairs = others.map(other => {
+    const key = [name, other].sort().join('|');
+    const rate = getRate(key);
+    const total = pairStats[key]?.total || 0;
+    return { name: other, rate, total };
+  }).filter(p => p.rate !== null).sort((a, b) => b.rate - a.rate);
+
+  if (pairs.length === 0) {
+    detail.innerHTML = '<p class="empty-msg">データが足りません<br>試合を重ねると相性がわかるよ！</p>';
+    return;
+  }
+
+  const best = pairs[0];
+  const worst = pairs[pairs.length - 1];
+
+  detail.innerHTML = `
+    <div class="bw-grid">
+      <div class="bw-box best">
+        <p class="bw-label">最高の相性</p>
+        <p class="bw-name">${best.name}</p>
+        <p class="bw-rate">${best.rate}%（${best.total}試合）</p>
+      </div>
+      <div class="bw-box worst">
+        <p class="bw-label">要注意の相性</p>
+        <p class="bw-name">${worst.name}</p>
+        <p class="bw-rate">${worst.rate}%（${worst.total}試合）</p>
+      </div>
+    </div>
+    <p class="section-label">全員との相性</p>
+    <div class="pair-list">
+      ${pairs.map((p, i) => {
+        const rc = getRateClass(p.rate);
+        const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+        return `<div class="pair-card">
+          <div class="rank-badge ${rankClass}">${i + 1}</div>
+          <span class="pair-names">${p.name}</span>
+          <span class="pair-games">${p.total}試合</span>
+          <div class="pair-bar-wrap"><div class="pair-bar ${rc}" style="width:${p.rate}%"></div></div>
+          <span class="pair-rate ${rc}">${p.rate}%</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function switchMainTab(name) {
+  document.querySelectorAll('.main-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['personal', 'compat'][i] === name);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el('page-' + name).classList.add('active');
+}
+
+function switchSubTab(name) {
+  document.querySelectorAll('.sub-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['ranking', 'matrix', 'player'][i] === name);
+  });
+  document.querySelectorAll('.sub-page').forEach(p => p.classList.remove('active'));
+  el('sub-' + name).classList.add('active');
+}
+
+loadAll();
+</script>
+</body>
+</html>
