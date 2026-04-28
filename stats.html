@@ -13,141 +13,63 @@
   @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
   @keyframes pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
 
-  .header {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
-    padding: 1.25rem 1rem 1.5rem;
-    text-align: center;
-    border-radius: 0 0 24px 24px;
-    margin-bottom: 0;
-    box-shadow: 0 4px 16px rgba(29,78,216,0.25);
-  }
+  .header { background: linear-gradient(135deg, #1d4ed8, #1e40af); padding: 1.25rem 1rem 1.5rem; text-align: center; border-radius: 0 0 24px 24px; margin-bottom: 0; box-shadow: 0 4px 16px rgba(29,78,216,0.25); }
   .header h1 { color: white; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
   .header p { color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 4px; }
 
-  .main-tab-row {
-    display: flex;
-    background: white;
-    border-bottom: 0.5px solid #e5e7eb;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  .main-tab {
-    flex: 1;
-    text-align: center;
-    padding: 12px 8px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #9ca3af;
-    cursor: pointer;
-    border-bottom: 2.5px solid transparent;
-    transition: all 0.15s;
-  }
+  .main-tab-row { display: flex; background: white; border-bottom: 0.5px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+  .main-tab { flex: 1; text-align: center; padding: 12px 4px; font-size: 13px; font-weight: 600; color: #9ca3af; cursor: pointer; border-bottom: 2.5px solid transparent; transition: all 0.15s; }
   .main-tab.active { color: #1d4ed8; border-bottom-color: #1d4ed8; }
+  .main-tab.parent-tab.active { color: #059669; border-bottom-color: #059669; }
 
   .wrap { padding: 1rem; max-width: 480px; margin: 0 auto; }
   .page { display: none; animation: fadeIn 0.3s ease; }
   .page.active { display: block; }
 
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
-  .metric-card {
-    background: white;
-    border-radius: 14px;
-    padding: 0.875rem;
-    text-align: center;
-    border: 1.5px solid #e0e7ff;
-  }
+  .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .metric-card { background: white; border-radius: 14px; padding: 0.875rem; text-align: center; border: 1.5px solid #e0e7ff; }
+  .metric-card.green { border-color: #d1fae5; }
   .metric-label { font-size: 11px; color: #6b7280; margin-bottom: 4px; font-weight: 600; }
   .metric-value { font-size: 24px; font-weight: 700; color: #1e40af; }
+  .metric-value.green { color: #059669; }
   .metric-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
 
-  .sort-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-  }
-  .sort-btn {
-    font-size: 12px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    border: 1.5px solid #bfdbfe;
-    background: white;
-    color: #3b82f6;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.15s;
-  }
+  .sort-row { display: flex; gap: 6px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .sort-btn { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1.5px solid #bfdbfe; background: white; color: #3b82f6; cursor: pointer; font-weight: 600; transition: all 0.15s; }
   .sort-btn.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+  .sort-btn.green-btn { border-color: #6ee7b7; color: #059669; }
+  .sort-btn.green-btn.active { background: #059669; color: white; border-color: #059669; }
 
-  .section-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: #6b7280;
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
-  }
+  .section-label { font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 8px; letter-spacing: 0.5px; }
 
   .player-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
 
-  .player-card {
-    background: white;
-    border-radius: 16px;
-    padding: 1rem;
-    border: 1.5px solid #e0e7ff;
-    animation: pop 0.3s ease;
-    transition: border-color 0.15s;
-  }
+  .player-card { background: white; border-radius: 16px; padding: 1rem; border: 1.5px solid #e0e7ff; animation: pop 0.3s ease; }
+  .player-card.parent-card { border-color: #d1fae5; }
 
-  .player-card-top {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
+  .player-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 
-  .rank-badge {
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700;
-    flex-shrink: 0;
-  }
+  .rank-badge { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
   .rank-1 { background: #fef9c3; color: #854d0e; }
   .rank-2 { background: #f1f5f9; color: #475569; }
   .rank-3 { background: #fff7ed; color: #9a3412; }
   .rank-n { background: #f3f4f6; color: #9ca3af; }
 
-  .player-avatar {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: #dbeafe;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: #1e40af;
-    flex-shrink: 0;
-  }
+  .player-avatar { width: 36px; height: 36px; border-radius: 50%; background: #dbeafe; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #1e40af; flex-shrink: 0; }
+  .player-avatar.green { background: #d1fae5; color: #059669; }
 
   .player-info { flex: 1; }
   .player-name { font-size: 15px; font-weight: 700; color: #1f2937; }
   .player-games { font-size: 11px; color: #9ca3af; margin-top: 1px; }
 
-  .win-badge {
-    font-size: 13px; font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 20px;
-  }
+  .win-badge { font-size: 13px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
   .win-high { background: #dcfce7; color: #166534; }
   .win-mid  { background: #dbeafe; color: #1e40af; }
   .win-low  { background: #fee2e2; color: #991b1b; }
 
   .bars-area { display: flex; flex-direction: column; gap: 6px; }
   .bar-row { display: flex; align-items: center; gap: 8px; }
-  .bar-label { font-size: 11px; color: #6b7280; width: 44px; flex-shrink: 0; font-weight: 600; }
+  .bar-label { font-size: 11px; color: #6b7280; width: 48px; flex-shrink: 0; font-weight: 600; }
   .bar-wrap { flex: 1; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
   .bar-win { background: #2563eb; }
@@ -156,73 +78,28 @@
   .bar-rate { font-size: 12px; font-weight: 700; min-width: 36px; text-align: right; }
   .rate-win { color: #2563eb; }
   .rate-survive { color: #059669; }
-  .rate-soon { color: #d1d5db; }
-
-  .coming-soon {
-    font-size: 10px;
-    padding: 1px 5px;
-    border-radius: 4px;
-    background: #f3f4f6;
-    color: #9ca3af;
-    margin-left: 4px;
-    font-weight: 600;
-  }
+  .rate-hit { color: #d97706; }
 
   /* 相性分析 */
-  .sub-tab-row {
-    display: flex;
-    background: white;
-    border-radius: 12px;
-    padding: 4px;
-    margin-bottom: 1rem;
-    border: 1.5px solid #e0e7ff;
-    gap: 4px;
-  }
-  .sub-tab {
-    flex: 1;
-    text-align: center;
-    padding: 8px 4px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #9ca3af;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.15s;
-  }
+  .sub-tab-row { display: flex; background: white; border-radius: 12px; padding: 4px; margin-bottom: 1rem; border: 1.5px solid #e0e7ff; gap: 4px; }
+  .sub-tab { flex: 1; text-align: center; padding: 8px 4px; font-size: 12px; font-weight: 700; color: #9ca3af; cursor: pointer; border-radius: 8px; transition: all 0.15s; }
   .sub-tab.active { background: #1d4ed8; color: white; }
+
+  .compat-switch { display: flex; gap: 6px; margin-bottom: 0.75rem; }
+  .compat-switch-btn { flex: 1; padding: 8px; border-radius: 10px; border: 1.5px solid #bfdbfe; background: white; color: #3b82f6; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .compat-switch-btn.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+  .compat-switch-btn.green-switch.active { background: #059669; color: white; border-color: #059669; }
+  .compat-switch-btn.green-switch { border-color: #6ee7b7; color: #059669; }
 
   .sub-page { display: none; }
   .sub-page.active { display: block; animation: fadeIn 0.3s ease; }
 
-  .filter-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-  }
-  .filter-btn {
-    font-size: 12px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    border: 1.5px solid #bfdbfe;
-    background: white;
-    color: #3b82f6;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.15s;
-  }
+  .filter-row { display: flex; gap: 6px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .filter-btn { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1.5px solid #bfdbfe; background: white; color: #3b82f6; cursor: pointer; font-weight: 600; transition: all 0.15s; }
   .filter-btn.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
 
   .pair-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
-  .pair-card {
-    background: white;
-    border: 1.5px solid #e0e7ff;
-    border-radius: 14px;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  .pair-card { background: white; border: 1.5px solid #e0e7ff; border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
   .pair-names { font-size: 13px; font-weight: 700; color: #1f2937; flex: 1; }
   .pair-games { font-size: 11px; color: #9ca3af; min-width: 32px; text-align: right; }
   .pair-bar-wrap { width: 72px; height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
@@ -250,15 +127,7 @@
   .cell-low  { background: #fee2e2; color: #7f1d1d; }
   .cell-none { background: #f9fafb; color: #d1d5db; font-size: 9px; }
 
-  .player-select {
-    width: 100%; margin-bottom: 0.75rem;
-    font-size: 14px; padding: 10px 12px;
-    border-radius: 12px;
-    border: 1.5px solid #bfdbfe;
-    background: white;
-    color: #1f2937;
-    font-weight: 600;
-  }
+  .player-select { width: 100%; margin-bottom: 0.75rem; font-size: 14px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid #bfdbfe; background: white; color: #1f2937; font-weight: 600; }
 
   .bw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
   .bw-box { border-radius: 12px; padding: 10px 12px; }
@@ -274,7 +143,6 @@
 
   .loading-msg { text-align: center; font-size: 14px; color: #3b82f6; font-weight: 600; padding: 2rem 0; }
   .error-msg { text-align: center; color: #dc2626; font-size: 13px; padding: 0.75rem; background: #fff1f2; border-radius: 12px; border: 1px solid #fca5a5; margin-bottom: 1rem; }
-
   .empty-msg { text-align: center; color: #9ca3af; font-size: 13px; padding: 2rem 0; font-weight: 600; }
 </style>
 </head>
@@ -286,13 +154,14 @@
 </div>
 
 <div class="main-tab-row">
-  <div class="main-tab active" onclick="switchMainTab('personal')">🏆 個人成績</div>
+  <div class="main-tab active" onclick="switchMainTab('personal')">🏆 子ども成績</div>
+  <div class="main-tab parent-tab" onclick="switchMainTab('parent')">👨 保護者成績</div>
   <div class="main-tab" onclick="switchMainTab('compat')">🤝 相性分析</div>
 </div>
 
 <div class="wrap">
 
-  <!-- 個人成績ページ -->
+  <!-- 子ども個人成績ページ -->
   <div class="page active" id="page-personal">
     <div id="personal-loading" class="loading-msg">データを読み込み中...</div>
     <div id="personal-content" style="display:none">
@@ -305,26 +174,60 @@
         <div class="metric-card">
           <p class="metric-label">参加人数</p>
           <p class="metric-value" id="total-players">-</p>
-          <p class="metric-sub">登録メンバー</p>
+          <p class="metric-sub">子どもメンバー</p>
         </div>
       </div>
-
       <div class="sort-row">
-        <button class="sort-btn active" onclick="setSort('win', this)">勝率順</button>
-        <button class="sort-btn" onclick="setSort('survive', this)">生存率順</button>
-        <button class="sort-btn" onclick="setSort('games', this)">試合数順</button>
+        <button class="sort-btn active" onclick="setSort('win', this, 'child')">勝率順</button>
+        <button class="sort-btn" onclick="setSort('survive', this, 'child')">生存率順</button>
+        <button class="sort-btn" onclick="setSort('hits', this, 'child')">ヒット順</button>
+        <button class="sort-btn" onclick="setSort('games', this, 'child')">試合数順</button>
       </div>
-
       <p class="section-label">個人成績一覧</p>
       <div class="player-list" id="player-list"></div>
     </div>
     <div id="personal-error"></div>
   </div>
 
+  <!-- 保護者成績ページ -->
+  <div class="page" id="page-parent">
+    <div id="parent-loading" class="loading-msg">データを読み込み中...</div>
+    <div id="parent-content" style="display:none">
+      <div class="summary-grid">
+        <div class="metric-card green">
+          <p class="metric-label">総試合数</p>
+          <p class="metric-value green" id="parent-total-matches">-</p>
+          <p class="metric-sub">今シーズン</p>
+        </div>
+        <div class="metric-card green">
+          <p class="metric-label">参加保護者数</p>
+          <p class="metric-value green" id="parent-total-players">-</p>
+          <p class="metric-sub">保護者メンバー</p>
+        </div>
+      </div>
+      <div class="sort-row">
+        <button class="sort-btn green-btn active" onclick="setSort('win', this, 'parent')">勝率順</button>
+        <button class="sort-btn green-btn" onclick="setSort('survive', this, 'parent')">生存率順</button>
+        <button class="sort-btn green-btn" onclick="setSort('hits', this, 'parent')">ヒット順</button>
+        <button class="sort-btn green-btn" onclick="setSort('games', this, 'parent')">試合数順</button>
+      </div>
+      <p class="section-label">保護者成績一覧</p>
+      <div class="player-list" id="parent-list"></div>
+    </div>
+    <div id="parent-error"></div>
+  </div>
+
   <!-- 相性分析ページ -->
   <div class="page" id="page-compat">
     <div id="compat-loading" class="loading-msg">データを読み込み中...</div>
     <div id="compat-content" style="display:none">
+
+      <!-- 子ども/保護者切り替え -->
+      <div class="compat-switch">
+        <div class="compat-switch-btn active" onclick="switchCompatTarget('child', this)">👦 子ども</div>
+        <div class="compat-switch-btn green-switch" onclick="switchCompatTarget('parent', this)">👨 保護者</div>
+      </div>
+
       <div class="sub-tab-row">
         <div class="sub-tab active" onclick="switchSubTab('ranking')">ランキング</div>
         <div class="sub-tab" onclick="switchSubTab('matrix')">マトリクス</div>
@@ -368,55 +271,71 @@
 </div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzW9x4Iq_LAOr-WfXcdVYqL15lLIhheUQ0PBU4ZHkxFhL7vpTkH8fLy6NUvRhbsZU6y/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzssp0w4Mv1H1czUwXZwqphqWacL-SAk5YTdYw6oQYKWU5_SSlqh-Z6fQK-Zgvt_xoL/exec';
 
 let personalStats = [];
+let parentStats = [];
 let matchRecords = [];
+let parentRecords = [];
 let pairStats = {};
+let parentPairStats = {};
 let sortKey = 'win';
+let parentSortKey = 'win';
 let filterKey = 'all';
+let compatTarget = 'child'; // 'child' or 'parent'
 
 function el(id) { return document.getElementById(id); }
 
 async function loadAll() {
   try {
-    const [statsRes, detailRes] = await Promise.all([
+    const [statsRes, detailRes, parentStatsRes, parentDetailRes] = await Promise.all([
       fetch(GAS_URL + '?action=getPersonalStats', { mode: 'cors' }),
-      fetch(GAS_URL + '?action=getMatchDetail', { mode: 'cors' })
+      fetch(GAS_URL + '?action=getMatchDetail', { mode: 'cors' }),
+      fetch(GAS_URL + '?action=getParentStats', { mode: 'cors' }),
+      fetch(GAS_URL + '?action=getParentDetail', { mode: 'cors' })
     ]);
     const statsData = await statsRes.json();
     const detailData = await detailRes.json();
+    const parentStatsData = await parentStatsRes.json();
+    const parentDetailData = await parentDetailRes.json();
 
     personalStats = statsData.stats || [];
     matchRecords = detailData.records || [];
+    parentStats = parentStatsData.stats || [];
+    parentRecords = parentDetailData.records || [];
 
-    buildPairStats();
+    buildPairStats(matchRecords, 'child');
+    buildPairStats(parentRecords, 'parent');
+
     renderPersonal();
+    renderParent();
     renderCompat();
 
     const maxMatches = personalStats.length > 0 ? Math.max(...personalStats.map(s => s.total)) : 0;
     el('total-matches').textContent = maxMatches;
     el('total-players').textContent = personalStats.length + '人';
-    el('header-sub').textContent = `${personalStats.length}人 / ${maxMatches}試合のデータ`;
+    el('header-sub').textContent = `子ども${personalStats.length}人 / 保護者${parentStats.length}人`;
+
+    const pMaxMatches = parentStats.length > 0 ? Math.max(...parentStats.map(s => s.total)) : 0;
+    el('parent-total-matches').textContent = pMaxMatches;
+    el('parent-total-players').textContent = parentStats.length + '人';
 
   } catch(e) {
-    el('personal-loading').style.display = 'none';
-    el('personal-error').innerHTML = '<p class="error-msg">データの読み込みに失敗しました</p>';
-    el('compat-loading').style.display = 'none';
-    el('compat-error').innerHTML = '<p class="error-msg">データの読み込みに失敗しました</p>';
+    ['personal','parent','compat'].forEach(t => {
+      el(t + '-loading').style.display = 'none';
+      el(t + '-error').innerHTML = '<p class="error-msg">データの読み込みに失敗しました</p>';
+    });
   }
 }
 
-function buildPairStats() {
-  pairStats = {};
+function buildPairStats(records, target) {
+  const stats = {};
   const matchMap = {};
-
-  matchRecords.forEach(r => {
+  records.forEach(r => {
     const key = r.date + '-' + r.matchNum;
     if (!matchMap[key]) matchMap[key] = { A: [], B: [] };
     matchMap[key][r.team].push({ name: r.name, result: r.result });
   });
-
   Object.values(matchMap).forEach(match => {
     ['A', 'B'].forEach(team => {
       const teamMembers = match[team];
@@ -427,17 +346,20 @@ function buildPairStats() {
         for (let j = i + 1; j < names.length; j++) {
           if (names[i] === names[j]) continue;
           const key = [names[i], names[j]].sort().join('|');
-          if (!pairStats[key]) pairStats[key] = { win: 0, total: 0 };
-          pairStats[key].total++;
-          if (won) pairStats[key].win++;
+          if (!stats[key]) stats[key] = { win: 0, total: 0 };
+          stats[key].total++;
+          if (won) stats[key].win++;
         }
       }
     });
   });
+  if (target === 'child') pairStats = stats;
+  else parentPairStats = stats;
 }
 
-function getRate(key) {
-  const s = pairStats[key];
+function getRate(key, target) {
+  const stats = target === 'parent' ? parentPairStats : pairStats;
+  const s = stats[key];
   return s && s.total > 0 ? Math.round(s.win / s.total * 100) : null;
 }
 
@@ -446,65 +368,97 @@ function getRateClass(r) {
   return r >= 60 ? 'high' : r >= 40 ? 'mid' : 'low';
 }
 
+function renderPlayerCard(p, i, isParent) {
+  const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+  const winBadgeClass = p.winRate >= 70 ? 'win-high' : p.winRate >= 50 ? 'win-mid' : 'win-low';
+  const maxHits = isParent
+    ? Math.max(...parentStats.map(s => s.hits || 0), 1)
+    : Math.max(...personalStats.map(s => s.hits || 0), 1);
+  const hitPct = Math.round(((p.hits || 0) / maxHits) * 100);
+  return `<div class="player-card${isParent ? ' parent-card' : ''}">
+    <div class="player-card-top">
+      <div class="rank-badge ${rankClass}">${i + 1}</div>
+      <div class="player-avatar${isParent ? ' green' : ''}">${p.name.slice(0, 2)}</div>
+      <div class="player-info">
+        <p class="player-name">${p.name}</p>
+        <p class="player-games">${p.total}試合 ${p.win}勝</p>
+      </div>
+      <span class="win-badge ${winBadgeClass}">${p.winRate}%</span>
+    </div>
+    <div class="bars-area">
+      <div class="bar-row">
+        <span class="bar-label">勝率</span>
+        <div class="bar-wrap"><div class="bar-fill bar-win" style="width:${p.winRate}%"></div></div>
+        <span class="bar-rate rate-win">${p.winRate}%</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">生存率</span>
+        <div class="bar-wrap"><div class="bar-fill bar-survive" style="width:${p.surviveRate}%"></div></div>
+        <span class="bar-rate rate-survive">${p.surviveRate}%</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">与ヒット</span>
+        <div class="bar-wrap"><div class="bar-fill bar-hit" style="width:${hitPct}%"></div></div>
+        <span class="bar-rate rate-hit">${p.hits || 0}回</span>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderPersonal() {
   el('personal-loading').style.display = 'none';
-
   if (personalStats.length === 0) {
     el('personal-content').style.display = 'block';
     el('player-list').innerHTML = '<p class="empty-msg">まだデータがありません<br>試合を記録してね！</p>';
     return;
   }
-
   el('personal-content').style.display = 'block';
   renderPlayerList();
 }
 
-function setSort(key, btn) {
-  sortKey = key;
-  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderPlayerList();
+function renderParent() {
+  el('parent-loading').style.display = 'none';
+  if (parentStats.length === 0) {
+    el('parent-content').style.display = 'block';
+    el('parent-list').innerHTML = '<p class="empty-msg">まだデータがありません<br>保護者が試合に参加すると表示されるよ！</p>';
+    return;
+  }
+  el('parent-content').style.display = 'block';
+  renderParentList();
+}
+
+function setSort(key, btn, target) {
+  if (target === 'child') {
+    sortKey = key;
+    document.querySelectorAll('#page-personal .sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPlayerList();
+  } else {
+    parentSortKey = key;
+    document.querySelectorAll('#page-parent .sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderParentList();
+  }
 }
 
 function renderPlayerList() {
   const sorted = [...personalStats].sort((a, b) => {
     if (sortKey === 'win') return b.winRate - a.winRate;
     if (sortKey === 'survive') return b.surviveRate - a.surviveRate;
+    if (sortKey === 'hits') return (b.hits || 0) - (a.hits || 0);
     return b.total - a.total;
   });
+  el('player-list').innerHTML = sorted.map((p, i) => renderPlayerCard(p, i, false)).join('');
+}
 
-  el('player-list').innerHTML = sorted.map((p, i) => {
-    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
-    const winBadgeClass = p.winRate >= 70 ? 'win-high' : p.winRate >= 50 ? 'win-mid' : 'win-low';
-    return `<div class="player-card">
-      <div class="player-card-top">
-        <div class="rank-badge ${rankClass}">${i + 1}</div>
-        <div class="player-avatar">${p.name.slice(0, 2)}</div>
-        <div class="player-info">
-          <p class="player-name">${p.name}</p>
-          <p class="player-games">${p.total}試合 ${p.win}勝</p>
-        </div>
-        <span class="win-badge ${winBadgeClass}">${p.winRate}%</span>
-      </div>
-      <div class="bars-area">
-        <div class="bar-row">
-          <span class="bar-label">勝率</span>
-          <div class="bar-wrap"><div class="bar-fill bar-win" style="width:${p.winRate}%"></div></div>
-          <span class="bar-rate rate-win">${p.winRate}%</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">生存率</span>
-          <div class="bar-wrap"><div class="bar-fill bar-survive" style="width:${p.surviveRate}%"></div></div>
-          <span class="bar-rate rate-survive">${p.surviveRate}%</span>
-        </div>
-        <div class="bar-row">
-          <span class="bar-label">与ヒット<span class="coming-soon">準備中</span></span>
-          <div class="bar-wrap"><div class="bar-fill bar-hit" style="width:0%"></div></div>
-          <span class="bar-rate rate-soon">-</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+function renderParentList() {
+  const sorted = [...parentStats].sort((a, b) => {
+    if (parentSortKey === 'win') return b.winRate - a.winRate;
+    if (parentSortKey === 'survive') return b.surviveRate - a.surviveRate;
+    if (parentSortKey === 'hits') return (b.hits || 0) - (a.hits || 0);
+    return b.total - a.total;
+  });
+  el('parent-list').innerHTML = sorted.map((p, i) => renderPlayerCard(p, i, true)).join('');
 }
 
 function renderCompat() {
@@ -515,10 +469,20 @@ function renderCompat() {
   renderPlayerSelect();
 }
 
+function switchCompatTarget(target, btn) {
+  compatTarget = target;
+  document.querySelectorAll('.compat-switch-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPairs();
+  renderMatrix();
+  renderPlayerSelect();
+}
+
 function getPairs() {
-  return Object.keys(pairStats).map(key => {
+  const stats = compatTarget === 'parent' ? parentPairStats : pairStats;
+  return Object.keys(stats).map(key => {
     const [a, b] = key.split('|');
-    const s = pairStats[key];
+    const s = stats[key];
     const rate = Math.round(s.win / s.total * 100);
     return { key, a, b, rate, total: s.total };
   }).filter(p => {
@@ -555,14 +519,15 @@ function renderPairs() {
 }
 
 function renderMatrix() {
-  const names = personalStats.map(p => p.name);
-  if (names.length === 0) return;
+  const stats = compatTarget === 'parent' ? parentStats : personalStats;
+  const names = stats.map(p => p.name);
+  if (names.length === 0) { el('matrix-table').innerHTML = ''; return; }
   let html = '<tr><th></th>' + names.map(n => `<th>${n.slice(0, 3)}</th>`).join('') + '</tr>';
   names.forEach(row => {
     html += `<tr><td class="name-cell">${row}</td>`;
     names.forEach(col => {
       if (row === col) { html += `<td class="cell-self">—</td>`; return; }
-      const rate = getRate([row, col].sort().join('|'));
+      const rate = getRate([row, col].sort().join('|'), compatTarget);
       if (rate === null) { html += `<td class="cell-none">-</td>`; return; }
       html += `<td class="cell-${getRateClass(rate)}">${rate}%</td>`;
     });
@@ -572,12 +537,15 @@ function renderMatrix() {
 }
 
 function renderPlayerSelect() {
+  const stats = compatTarget === 'parent' ? parentStats : personalStats;
   const sel = el('player-select');
-  personalStats.forEach(p => {
+  sel.innerHTML = '<option value="">-- 選手を選んでね --</option>';
+  stats.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.name; opt.textContent = p.name;
     sel.appendChild(opt);
   });
+  el('player-detail').innerHTML = '';
 }
 
 function renderPlayerDetail() {
@@ -585,11 +553,13 @@ function renderPlayerDetail() {
   const detail = el('player-detail');
   if (!name) { detail.innerHTML = ''; return; }
 
-  const others = personalStats.map(p => p.name).filter(n => n !== name);
+  const stats = compatTarget === 'parent' ? parentStats : personalStats;
+  const others = stats.map(p => p.name).filter(n => n !== name);
   const pairs = others.map(other => {
     const key = [name, other].sort().join('|');
-    const rate = getRate(key);
-    const total = pairStats[key]?.total || 0;
+    const rate = getRate(key, compatTarget);
+    const pStats = compatTarget === 'parent' ? parentPairStats : pairStats;
+    const total = pStats[key]?.total || 0;
     return { name: other, rate, total };
   }).filter(p => p.rate !== null).sort((a, b) => b.rate - a.rate);
 
@@ -632,7 +602,7 @@ function renderPlayerDetail() {
 
 function switchMainTab(name) {
   document.querySelectorAll('.main-tab').forEach((t, i) => {
-    t.classList.toggle('active', ['personal', 'compat'][i] === name);
+    t.classList.toggle('active', ['personal', 'parent', 'compat'][i] === name);
   });
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   el('page-' + name).classList.add('active');
