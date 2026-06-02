@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>モックA2: 退場者対応</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f0f9ff; min-height: 100vh; padding-bottom: 6rem; }
+  .header { background: linear-gradient(135deg,#2563eb,#1d4ed8); padding: 1rem; text-align: center; color: white; border-radius: 0 0 20px 20px; margin-bottom: 0.75rem; }
+  .header h1 { font-size: 18px; }
+  .header p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+  .nav { text-align:center; padding: 0.5rem; font-size: 12px; }
+  .nav a { color: #2563eb; margin: 0 8px; text-decoration: none; font-weight: 600; }
+  .wrap { padding: 0 0.75rem; max-width: 520px; margin: 0 auto; }
+  .note { background: #fef3c7; border-radius: 10px; padding: 8px 12px; font-size: 12px; color: #92400e; margin-bottom: 0.75rem; line-height: 1.5; }
+
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
+  .sum-card { background: white; border-radius: 12px; padding: 0.55rem; text-align: center; border: 1.5px solid; }
+  .sum-card.a { border-color: #fca5a5; }
+  .sum-card.b { border-color: #93c5fd; }
+  .sum-label { font-size: 11px; color: #6b7280; font-weight: 700; }
+  .sum-val { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .sum-val.a { color: #dc2626; }
+  .sum-val.b { color: #2563eb; }
+  .sum-sub { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+
+  .team-box { background: white; border-radius: 14px; padding: 0.65rem; margin-bottom: 0.6rem; border: 2px solid; }
+  .team-box.a { border-color: #fca5a5; }
+  .team-box.b { border-color: #93c5fd; }
+  .team-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .team-title.a { color: #991b1b; }
+  .team-title.b { color: #1e40af; }
+
+  .zone-label { font-size: 10px; font-weight: 700; color: #9ca3af; letter-spacing: 1px; margin: 4px 0 4px; padding-left: 4px; display: flex; align-items: center; gap: 6px; }
+  .zone-label .count { font-size: 10px; color: #6b7280; }
+
+  .players { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .player { aspect-ratio: 1.1; border-radius: 14px; border: 2.5px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.15s; user-select: none; padding: 4px; position: relative; }
+  .player:active { transform: scale(0.93); }
+  .player.in.a { border-color: #fca5a5; background: #fff1f2; color: #991b1b; }
+  .player.in.b { border-color: #93c5fd; background: #eff6ff; color: #1e40af; }
+  .player.out.a { border-color: #fbbf24; background: #fffbeb; color: #92400e; border-style: dashed; }
+  .player.out.b { border-color: #fbbf24; background: #fffbeb; color: #92400e; border-style: dashed; }
+  .player-name { font-size: 13px; font-weight: 700; line-height: 1.1; text-align: center; }
+  .player-hit { font-size: 10px; font-weight: 700; margin-top: 3px; padding: 1px 8px; border-radius: 10px; background: rgba(255,255,255,0.85); }
+  .out-marker { position: absolute; top: 3px; right: 4px; font-size: 9px; font-weight: 700; color: #92400e; background: #fde68a; padding: 1px 5px; border-radius: 6px; }
+
+  .empty-zone { grid-column: 1 / -1; font-size: 11px; color: #d1d5db; text-align: center; padding: 14px; font-weight: 600; }
+
+  /* シート */
+  .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+  .backdrop.show { display: block; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; background: white; border-radius: 22px 22px 0 0; padding: 1rem 1rem 1.5rem; z-index: 101; transform: translateY(100%); transition: transform 0.25s ease; max-height: 80vh; overflow-y: auto; }
+  .sheet.show { transform: translateY(0); }
+  .sheet-grip { width: 36px; height: 4px; background: #d1d5db; border-radius: 2px; margin: 0 auto 12px; }
+  .sheet-title { font-size: 15px; font-weight: 700; text-align: center; margin-bottom: 4px; color: #1f2937; }
+  .sheet-sub { font-size: 11px; text-align: center; color: #9ca3af; margin-bottom: 14px; }
+  .sheet-out-name { color: #dc2626; }
+  .sheet-zone-label { font-size: 10px; font-weight: 700; color: #9ca3af; margin: 6px 0 6px; letter-spacing: 1px; }
+  .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .sheet-btn { aspect-ratio: 1.4; border-radius: 14px; border: 2px solid; background: white; font-size: 14px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; }
+  .sheet-btn .sb-sub { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 6px; }
+  .sheet-btn.a { border-color: #fca5a5; color: #991b1b; background: #fff1f2; }
+  .sheet-btn.b { border-color: #93c5fd; color: #1e40af; background: #eff6ff; }
+  .sheet-btn.out { border-style: dashed; }
+  .sheet-btn .sb-sub.out-tag { background: #fde68a; color: #92400e; }
+  .sheet-btn:active { transform: scale(0.94); }
+  .sheet-skip { width: 100%; padding: 14px; border-radius: 50px; border: 1.5px solid #e5e7eb; background: white; color: #6b7280; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+  .undo-toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 600; display: none; z-index: 200; box-shadow: 0 4px 16px rgba(0,0,0,0.25); white-space: nowrap; }
+  .undo-toast.show { display: flex; gap: 12px; align-items: center; }
+  .undo-toast button { background: #fbbf24; color: #78350f; border: none; padding: 4px 12px; border-radius: 20px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚽ 第1試合（A2：退場者対応）</h1>
+  <p>退場者からの攻撃も記録できます</p>
+</div>
+
+<div class="nav">
+  <a href="mock-a.html">A</a>
+  <a href="mock-a2.html">[ A2 ]</a>
+  <a href="mock-b.html">B</a>
+  <a href="mock-c.html">C</a>
+</div>
+
+<div class="wrap">
+
+<div class="note">
+  💡 <b>内野</b>の子をタップ → 退場へ移動 → 「誰が当てた？」シートで相手の<b>内野・退場者どちらでも</b>選択可<br>
+  退場者の子をタップ＝内野に戻す（取消）
+</div>
+
+<div class="summary">
+  <div class="sum-card a">
+    <div class="sum-label">🔴 A 内野</div>
+    <div class="sum-val a" id="in-a">5</div>
+    <div class="sum-sub">退場 <span id="out-a">0</span>人</div>
+  </div>
+  <div class="sum-card b">
+    <div class="sum-label">🔵 B 内野</div>
+    <div class="sum-val b" id="in-b">5</div>
+    <div class="sum-sub">退場 <span id="out-b">0</span>人</div>
+  </div>
+</div>
+
+<div class="team-box a">
+  <div class="team-title a"><span>🔴 チームA</span></div>
+  <div class="zone-label">🟥 内野 <span class="count" id="zl-in-a"></span></div>
+  <div class="players" id="players-in-a"></div>
+  <div class="zone-label">🟨 退場 <span class="count" id="zl-out-a"></span></div>
+  <div class="players" id="players-out-a"></div>
+</div>
+
+<div class="team-box b">
+  <div class="team-title b"><span>🔵 チームB</span></div>
+  <div class="zone-label">🟦 内野 <span class="count" id="zl-in-b"></span></div>
+  <div class="players" id="players-in-b"></div>
+  <div class="zone-label">🟨 退場 <span class="count" id="zl-out-b"></span></div>
+  <div class="players" id="players-out-b"></div>
+</div>
+
+</div>
+
+<div class="backdrop" id="backdrop" onclick="closeSheet(true)"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-title">👈 <span class="sheet-out-name" id="sheet-out-name">？</span> を当てたのは？</div>
+  <div class="sheet-sub">内野・退場者どちらの選手でもOK</div>
+  <div class="sheet-zone-label">🟥 内野から</div>
+  <div class="sheet-grid" id="sheet-in"></div>
+  <div class="sheet-zone-label">🟨 退場者から</div>
+  <div class="sheet-grid" id="sheet-out"></div>
+  <button class="sheet-skip" onclick="closeSheet(true)">わからない / スキップ</button>
+</div>
+
+<div class="undo-toast" id="undo-toast">
+  <span id="undo-msg"></span>
+  <button onclick="undo()">取消</button>
+</div>
+
+<script>
+const teamA = ['たろう','じろう','さぶろう','しろう','ごろう'];
+const teamB = ['はなこ','ようこ','みちこ','けいこ','れいこ'];
+const state = {}; // { zone: 'in'|'out', hit: number }
+[...teamA, ...teamB].forEach(n => state[n] = { zone: 'in', hit: 0 });
+
+let pendingOut = null;
+let lastAction = null;
+
+function el(id) { return document.getElementById(id); }
+
+function render() {
+  ['a','b'].forEach(t => {
+    const list = t === 'a' ? teamA : teamB;
+    const inMembers = list.filter(n => state[n].zone === 'in');
+    const outMembers = list.filter(n => state[n].zone === 'out');
+    const inGrid = el('players-in-' + t);
+    const outGrid = el('players-out-' + t);
+    inGrid.innerHTML = '';
+    outGrid.innerHTML = '';
+
+    if (inMembers.length === 0) inGrid.innerHTML = '<div class="empty-zone">（全員退場）</div>';
+    if (outMembers.length === 0) outGrid.innerHTML = '<div class="empty-zone">退場者はまだいません</div>';
+
+    inMembers.forEach(name => inGrid.appendChild(buildCard(name, t, 'in')));
+    outMembers.forEach(name => outGrid.appendChild(buildCard(name, t, 'out')));
+
+    el('in-' + t).textContent = inMembers.length;
+    el('out-' + t).textContent = outMembers.length;
+    el('zl-in-' + t).textContent = inMembers.length + '人';
+    el('zl-out-' + t).textContent = outMembers.length + '人';
+  });
+}
+
+function buildCard(name, team, zone) {
+  const s = state[name];
+  const d = document.createElement('div');
+  d.className = 'player ' + zone + ' ' + team;
+  d.innerHTML = `${zone === 'out' ? '<div class="out-marker">退</div>' : ''}<div class="player-name">${name}</div>${s.hit ? `<div class="player-hit">⚡${s.hit}</div>` : ''}`;
+  d.onclick = () => tapPlayer(name, team, zone);
+  return d;
+}
+
+function tapPlayer(name, team, zone) {
+  if (zone === 'out') {
+    // 外野 → 内野へ戻す（取消）
+    state[name].zone = 'in';
+    showUndo(name + ' を内野に戻しました');
+    lastAction = null;
+    render();
+    return;
+  }
+  // 内野 → 外野へ
+  pendingOut = { name, team };
+  state[name].zone = 'out';
+  render();
+  openSheet(name, team);
+}
+
+function openSheet(outName, outTeam) {
+  el('sheet-out-name').textContent = outName;
+  const opp = outTeam === 'a' ? 'b' : 'a';
+  const list = opp === 'a' ? teamA : teamB;
+  const inList = list.filter(n => state[n].zone === 'in');
+  const outList = list.filter(n => state[n].zone === 'out');
+
+  const inG = el('sheet-in');
+  const outG = el('sheet-out');
+  inG.innerHTML = '';
+  outG.innerHTML = '';
+
+  if (inList.length === 0) inG.innerHTML = '<div class="empty-zone">なし</div>';
+  if (outList.length === 0) outG.innerHTML = '<div class="empty-zone">なし</div>';
+
+  inList.forEach(n => inG.appendChild(buildSheetBtn(n, opp, 'in')));
+  outList.forEach(n => outG.appendChild(buildSheetBtn(n, opp, 'out')));
+
+  el('backdrop').classList.add('show');
+  el('sheet').classList.add('show');
+}
+
+function buildSheetBtn(name, team, zone) {
+  const b = document.createElement('button');
+  b.className = 'sheet-btn ' + team + (zone === 'out' ? ' out' : '');
+  b.innerHTML = `<span>${name}</span>${zone === 'out' ? '<span class="sb-sub out-tag">退場</span>' : ''}`;
+  b.onclick = () => recordHit(name);
+  return b;
+}
+
+function closeSheet(skipped) {
+  el('backdrop').classList.remove('show');
+  el('sheet').classList.remove('show');
+  if (skipped && pendingOut) {
+    lastAction = { type: 'out', name: pendingOut.name };
+    showUndo(pendingOut.name + ' を退場');
+  }
+  pendingOut = null;
+}
+
+function recordHit(thrower) {
+  state[thrower].hit++;
+  const thrZone = state[thrower].zone === 'out' ? '退場' : '内野';
+  lastAction = { type: 'hitout', out: pendingOut.name, thrower };
+  showUndo(`${thrower}(${thrZone}) → ${pendingOut.name} を当てた`);
+  closeSheet(false);
+  render();
+}
+
+function showUndo(msg) {
+  el('undo-msg').textContent = msg;
+  el('undo-toast').classList.add('show');
+  clearTimeout(window._t);
+  window._t = setTimeout(() => el('undo-toast').classList.remove('show'), 4000);
+}
+
+function undo() {
+  if (!lastAction) { el('undo-toast').classList.remove('show'); return; }
+  if (lastAction.type === 'out') state[lastAction.name].zone = 'in';
+  if (lastAction.type === 'hitout') {
+    state[lastAction.out].zone = 'in';
+    state[lastAction.thrower].hit = Math.max(0, state[lastAction.thrower].hit - 1);
+  }
+  lastAction = null;
+  el('undo-toast').classList.remove('show');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

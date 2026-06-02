@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>モックC: 最速・退場のみ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f0f9ff; min-height: 100vh; padding-bottom: 5rem; }
+  .header { background: linear-gradient(135deg,#2563eb,#1d4ed8); padding: 1rem; text-align: center; color: white; border-radius: 0 0 20px 20px; margin-bottom: 0.75rem; }
+  .header h1 { font-size: 18px; }
+  .header p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+  .nav { text-align:center; padding: 0.5rem; font-size: 12px; }
+  .nav a { color: #2563eb; margin: 0 8px; text-decoration: none; font-weight: 600; }
+  .wrap { padding: 0 0.75rem; max-width: 520px; margin: 0 auto; }
+  .note { background: #fef3c7; border-radius: 10px; padding: 8px 12px; font-size: 12px; color: #92400e; margin-bottom: 0.75rem; }
+
+  .scoreboard { display: grid; grid-template-columns: 1fr 30px 1fr; gap: 8px; align-items: center; background: white; border-radius: 16px; padding: 0.75rem; margin-bottom: 0.75rem; border: 2px solid #e0e7ff; }
+  .score-side { text-align: center; }
+  .score-team { font-size: 13px; font-weight: 700; }
+  .score-team.a { color: #991b1b; }
+  .score-team.b { color: #1e40af; }
+  .score-big { font-size: 38px; font-weight: 800; line-height: 1; margin-top: 4px; }
+  .score-big.a { color: #dc2626; }
+  .score-big.b { color: #2563eb; }
+  .score-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+  .score-vs { font-size: 18px; font-weight: 700; color: #d1d5db; text-align: center; }
+
+  .team-block { background: white; border-radius: 16px; padding: 0.75rem; margin-bottom: 0.6rem; border: 2px solid; }
+  .team-block.a { border-color: #fca5a5; }
+  .team-block.b { border-color: #93c5fd; }
+  .block-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; text-align: center; letter-spacing: 1px; }
+  .block-title.a { color: #991b1b; }
+  .block-title.b { color: #1e40af; }
+
+  .big-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .big-cell { padding: 18px 8px; border-radius: 14px; border: 3px solid; font-size: 18px; font-weight: 700; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; transition: all 0.12s; min-height: 64px; display: flex; align-items: center; justify-content: center; }
+  .big-cell.a { background: white; border-color: #fca5a5; color: #991b1b; }
+  .big-cell.b { background: white; border-color: #93c5fd; color: #1e40af; }
+  .big-cell:active { transform: scale(0.94); }
+  .big-cell.out.a { background: #fee2e2; color: #fca5a5; text-decoration: line-through; border-style: dashed; }
+  .big-cell.out.b { background: #dbeafe; color: #93c5fd; text-decoration: line-through; border-style: dashed; }
+
+  .finish-btn { width: 100%; padding: 16px; border-radius: 50px; border: none; background: linear-gradient(135deg,#f97316,#ef4444); color: white; font-size: 17px; font-weight: 700; box-shadow: 0 4px 14px rgba(249,115,22,0.35); cursor: pointer; margin-top: 0.75rem; }
+
+  .undo-toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 600; display: none; z-index: 200; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+  .undo-toast.show { display: flex; gap: 12px; align-items: center; }
+  .undo-toast button { background: #fbbf24; color: #78350f; border: none; padding: 4px 12px; border-radius: 20px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚽ 第1試合（モックC：最速）</h1>
+  <p>タップ＝退場 / もう一度タップ＝復活 / 当てた数は後でまとめて</p>
+</div>
+
+<div class="nav">
+  <a href="mock-a.html">A</a>
+  <a href="mock-b.html">B</a>
+  <a href="mock-c.html">[ C ]</a>
+</div>
+
+<div class="wrap">
+<div class="note">💡 試合中は退場だけに集中。当てた数は試合後の振り返り画面で入力。</div>
+
+<div class="scoreboard">
+  <div class="score-side">
+    <div class="score-team a">🔴 チームA</div>
+    <div class="score-big a" id="alive-a">5</div>
+    <div class="score-sub">生存</div>
+  </div>
+  <div class="score-vs">VS</div>
+  <div class="score-side">
+    <div class="score-team b">🔵 チームB</div>
+    <div class="score-big b" id="alive-b">5</div>
+    <div class="score-sub">生存</div>
+  </div>
+</div>
+
+<div class="team-block a">
+  <div class="block-title a">🔴 チームA</div>
+  <div class="big-grid" id="grid-a"></div>
+</div>
+
+<div class="team-block b">
+  <div class="block-title b">🔵 チームB</div>
+  <div class="big-grid" id="grid-b"></div>
+</div>
+
+<button class="finish-btn">試合終了 → 当てた数を入力</button>
+</div>
+
+<div class="undo-toast" id="undo-toast">
+  <span id="undo-msg"></span>
+  <button onclick="undo()">取消</button>
+</div>
+
+<script>
+const teamA = ['たろう','じろう','さぶろう','しろう','ごろう'];
+const teamB = ['はなこ','ようこ','みちこ','けいこ','れいこ'];
+const state = {};
+[...teamA, ...teamB].forEach(n => state[n] = { out: false });
+let lastName = null;
+
+function el(id) { return document.getElementById(id); }
+
+function render() {
+  ['a','b'].forEach(t => {
+    const list = t === 'a' ? teamA : teamB;
+    const grid = el('grid-' + t);
+    grid.innerHTML = '';
+    list.forEach(name => {
+      const s = state[name];
+      const d = document.createElement('div');
+      d.className = 'big-cell ' + t + (s.out ? ' out' : '');
+      d.textContent = name;
+      d.onclick = () => {
+        s.out = !s.out;
+        if (s.out) {
+          lastName = name;
+          showUndo(name + ' を退場');
+        }
+        render();
+      };
+      grid.appendChild(d);
+    });
+    el('alive-' + t).textContent = list.filter(n => !state[n].out).length;
+  });
+}
+
+function showUndo(msg) {
+  el('undo-msg').textContent = msg;
+  el('undo-toast').classList.add('show');
+  clearTimeout(window._t);
+  window._t = setTimeout(() => el('undo-toast').classList.remove('show'), 3500);
+}
+
+function undo() {
+  if (lastName) state[lastName].out = false;
+  lastName = null;
+  el('undo-toast').classList.remove('show');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

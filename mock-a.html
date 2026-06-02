@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>モックA: イベント駆動</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f0f9ff; min-height: 100vh; padding-bottom: 6rem; }
+  .header { background: linear-gradient(135deg,#2563eb,#1d4ed8); padding: 1rem; text-align: center; color: white; border-radius: 0 0 20px 20px; margin-bottom: 1rem; }
+  .header h1 { font-size: 18px; }
+  .header p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+  .wrap { padding: 0 0.75rem; max-width: 520px; margin: 0 auto; }
+  .nav { text-align:center; padding: 0.5rem; font-size: 12px; }
+  .nav a { color: #2563eb; margin: 0 8px; text-decoration: none; font-weight: 600; }
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
+  .sum-card { background: white; border-radius: 12px; padding: 0.6rem; text-align: center; border: 1.5px solid #e0e7ff; }
+  .sum-card.a { border-color: #fca5a5; }
+  .sum-card.b { border-color: #93c5fd; }
+  .sum-label { font-size: 11px; color: #6b7280; font-weight: 700; }
+  .sum-val { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .sum-val.a { color: #dc2626; }
+  .sum-val.b { color: #2563eb; }
+
+  .team-section { background: white; border-radius: 14px; padding: 0.75rem; margin-bottom: 0.6rem; border: 2px solid; }
+  .team-section.a { border-color: #fca5a5; }
+  .team-section.b { border-color: #93c5fd; }
+  .team-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .team-title.a { color: #991b1b; }
+  .team-title.b { color: #1e40af; }
+  .players { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .player { aspect-ratio: 1; border-radius: 14px; border: 2.5px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.15s; user-select: none; padding: 4px; }
+  .player:active { transform: scale(0.93); }
+  .player.a { border-color: #fca5a5; background: #fff1f2; color: #991b1b; }
+  .player.b { border-color: #93c5fd; background: #eff6ff; color: #1e40af; }
+  .player-name { font-size: 14px; font-weight: 700; line-height: 1.1; text-align: center; }
+  .player-hit { font-size: 10px; font-weight: 700; margin-top: 4px; padding: 1px 8px; border-radius: 10px; background: rgba(255,255,255,0.7); }
+  .player.out { opacity: 0.35; background: #f3f4f6 !important; border-color: #d1d5db !important; color: #9ca3af !important; text-decoration: line-through; }
+  .player.dim { opacity: 0.35; }
+
+  /* ボトムシート */
+  .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; animation: fade 0.2s; }
+  .backdrop.show { display: block; }
+  @keyframes fade { from{opacity:0} to{opacity:1} }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; background: white; border-radius: 22px 22px 0 0; padding: 1rem 1rem 1.5rem; z-index: 101; transform: translateY(100%); transition: transform 0.25s ease; max-height: 70vh; overflow-y: auto; }
+  .sheet.show { transform: translateY(0); }
+  .sheet-grip { width: 36px; height: 4px; background: #d1d5db; border-radius: 2px; margin: 0 auto 12px; }
+  .sheet-title { font-size: 15px; font-weight: 700; text-align: center; margin-bottom: 12px; color: #1f2937; }
+  .sheet-out-name { color: #dc2626; }
+  .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .sheet-btn { aspect-ratio: 1.4; border-radius: 14px; border: 2px solid; background: white; font-size: 14px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .sheet-btn.a { border-color: #fca5a5; color: #991b1b; background: #fff1f2; }
+  .sheet-btn.b { border-color: #93c5fd; color: #1e40af; background: #eff6ff; }
+  .sheet-btn:active { transform: scale(0.94); }
+  .sheet-skip { width: 100%; padding: 14px; border-radius: 50px; border: 1.5px solid #e5e7eb; background: white; color: #6b7280; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+  .note { background: #fef3c7; border-radius: 10px; padding: 8px 12px; font-size: 12px; color: #92400e; margin-bottom: 0.75rem; }
+  .undo-toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 600; display: none; z-index: 200; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+  .undo-toast.show { display: flex; gap: 12px; align-items: center; }
+  .undo-toast button { background: #fbbf24; color: #78350f; border: none; padding: 4px 12px; border-radius: 20px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚽ 第1試合（モックA：イベント駆動）</h1>
+  <p>退場した子をタップ → 当てた相手をタップ</p>
+</div>
+
+<div class="nav">
+  <a href="mock-a.html">[ A ]</a>
+  <a href="mock-b.html">B</a>
+  <a href="mock-c.html">C</a>
+</div>
+
+<div class="wrap">
+
+<div class="note">💡 退場した子の顔をタップ → 下から「誰が当てた？」が出ます。当てた人をタップで両方記録、わからなければスキップ。</div>
+
+<div class="summary">
+  <div class="sum-card a"><div class="sum-label">🔴 A 退場</div><div class="sum-val a" id="out-a">0</div></div>
+  <div class="sum-card b"><div class="sum-label">🔵 B 退場</div><div class="sum-val b" id="out-b">0</div></div>
+</div>
+
+<div class="team-section a">
+  <div class="team-title a"><span>🔴 チームA</span><span id="alive-a">残り 5人</span></div>
+  <div class="players" id="players-a"></div>
+</div>
+
+<div class="team-section b">
+  <div class="team-title b"><span>🔵 チームB</span><span id="alive-b">残り 5人</span></div>
+  <div class="players" id="players-b"></div>
+</div>
+
+</div>
+
+<div class="backdrop" id="backdrop" onclick="closeSheet(true)"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-title">👈 <span class="sheet-out-name" id="sheet-out-name">？</span> を当てたのは？</div>
+  <div class="sheet-grid" id="sheet-grid"></div>
+  <button class="sheet-skip" onclick="closeSheet(true)">わからない / スキップ</button>
+</div>
+
+<div class="undo-toast" id="undo-toast">
+  <span id="undo-msg">退場を記録</span>
+  <button onclick="undo()">取消</button>
+</div>
+
+<script>
+const teamA = ['たろう','じろう','さぶろう','しろう','ごろう'];
+const teamB = ['はなこ','ようこ','みちこ','けいこ','れいこ'];
+const state = {};
+[...teamA, ...teamB].forEach(n => state[n] = { out: false, hit: 0 });
+
+let pendingOut = null;
+let lastAction = null;
+
+function el(id) { return document.getElementById(id); }
+
+function render() {
+  ['a','b'].forEach(t => {
+    const list = t === 'a' ? teamA : teamB;
+    const grid = el('players-' + t);
+    grid.innerHTML = '';
+    list.forEach(name => {
+      const s = state[name];
+      const d = document.createElement('div');
+      d.className = 'player ' + t + (s.out ? ' out' : '');
+      d.innerHTML = `<div class="player-name">${name}</div>${s.hit ? `<div class="player-hit">⚡${s.hit}</div>` : ''}`;
+      d.onclick = () => tapPlayer(name, t);
+      grid.appendChild(d);
+    });
+  });
+  const oA = teamA.filter(n => state[n].out).length;
+  const oB = teamB.filter(n => state[n].out).length;
+  el('out-a').textContent = oA;
+  el('out-b').textContent = oB;
+  el('alive-a').textContent = '残り ' + (teamA.length - oA) + '人';
+  el('alive-b').textContent = '残り ' + (teamB.length - oB) + '人';
+}
+
+function tapPlayer(name, team) {
+  if (state[name].out) {
+    state[name].out = false;
+    lastAction = null;
+    render();
+    return;
+  }
+  pendingOut = { name, team };
+  state[name].out = true;
+  render();
+  openSheet(name, team);
+}
+
+function openSheet(outName, outTeam) {
+  el('sheet-out-name').textContent = outName;
+  const opp = outTeam === 'a' ? 'b' : 'a';
+  const list = opp === 'a' ? teamA : teamB;
+  const grid = el('sheet-grid');
+  grid.innerHTML = '';
+  list.filter(n => !state[n].out).forEach(n => {
+    const b = document.createElement('button');
+    b.className = 'sheet-btn ' + opp;
+    b.textContent = n;
+    b.onclick = () => recordHit(n);
+    grid.appendChild(b);
+  });
+  el('backdrop').classList.add('show');
+  el('sheet').classList.add('show');
+}
+
+function closeSheet(skipped) {
+  el('backdrop').classList.remove('show');
+  el('sheet').classList.remove('show');
+  if (skipped && pendingOut) {
+    lastAction = { type: 'out', name: pendingOut.name };
+    showUndo(pendingOut.name + ' を退場');
+  }
+  pendingOut = null;
+}
+
+function recordHit(thrower) {
+  state[thrower].hit++;
+  lastAction = { type: 'hitout', out: pendingOut.name, thrower };
+  showUndo(thrower + ' → ' + pendingOut.name + ' を退場');
+  closeSheet(false);
+  render();
+}
+
+function showUndo(msg) {
+  el('undo-msg').textContent = msg;
+  el('undo-toast').classList.add('show');
+  clearTimeout(window._undoT);
+  window._undoT = setTimeout(() => el('undo-toast').classList.remove('show'), 4000);
+}
+
+function undo() {
+  if (!lastAction) return;
+  if (lastAction.type === 'out') state[lastAction.name].out = false;
+  if (lastAction.type === 'hitout') {
+    state[lastAction.out].out = false;
+    state[lastAction.thrower].hit = Math.max(0, state[lastAction.thrower].hit - 1);
+  }
+  lastAction = null;
+  el('undo-toast').classList.remove('show');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

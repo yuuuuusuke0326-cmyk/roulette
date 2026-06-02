@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>モックA3: サムネ表示</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f0f9ff; min-height: 100vh; padding-bottom: 6rem; }
+  .header { background: linear-gradient(135deg,#2563eb,#1d4ed8); padding: 1rem; text-align: center; color: white; border-radius: 0 0 20px 20px; margin-bottom: 0.75rem; }
+  .header h1 { font-size: 18px; }
+  .header p { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+  .nav { text-align:center; padding: 0.5rem; font-size: 12px; }
+  .nav a { color: #2563eb; margin: 0 8px; text-decoration: none; font-weight: 600; }
+  .wrap { padding: 0 0.75rem; max-width: 520px; margin: 0 auto; }
+  .note { background: #fef3c7; border-radius: 10px; padding: 8px 12px; font-size: 12px; color: #92400e; margin-bottom: 0.75rem; line-height: 1.5; }
+
+  .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 0.75rem; }
+  .sum-card { background: white; border-radius: 12px; padding: 0.55rem; text-align: center; border: 1.5px solid; }
+  .sum-card.a { border-color: #fca5a5; }
+  .sum-card.b { border-color: #93c5fd; }
+  .sum-label { font-size: 11px; color: #6b7280; font-weight: 700; }
+  .sum-val { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .sum-val.a { color: #dc2626; }
+  .sum-val.b { color: #2563eb; }
+  .sum-sub { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+
+  .team-box { background: white; border-radius: 14px; padding: 0.65rem; margin-bottom: 0.6rem; border: 2px solid; }
+  .team-box.a { border-color: #fca5a5; }
+  .team-box.b { border-color: #93c5fd; }
+  .team-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .team-title.a { color: #991b1b; }
+  .team-title.b { color: #1e40af; }
+  .zone-label { font-size: 10px; font-weight: 700; color: #9ca3af; letter-spacing: 1px; margin: 4px 0 4px; padding-left: 4px; display: flex; align-items: center; gap: 6px; }
+
+  .players { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+  /* サムネ表示カード */
+  .player { border-radius: 14px; border: 2.5px solid; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.15s; user-select: none; padding: 8px 4px 6px; position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .player:active { transform: scale(0.93); }
+  .player.in.a { border-color: #fca5a5; background: #fff1f2; }
+  .player.in.b { border-color: #93c5fd; background: #eff6ff; }
+  .player.out { border-color: #fbbf24; background: #fffbeb; border-style: dashed; }
+  .avatar { width: 52px; height: 52px; border-radius: 50%; background: white; border: 2px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; flex-shrink: 0; }
+  .avatar img, .avatar svg { width: 100%; height: 100%; display: block; }
+  .player.out .avatar { filter: grayscale(0.6) opacity(0.7); }
+  .player-name { font-size: 13px; font-weight: 700; line-height: 1.1; text-align: center; color: #1f2937; }
+  .player.in.a .player-name { color: #991b1b; }
+  .player.in.b .player-name { color: #1e40af; }
+  .player.out .player-name { color: #92400e; text-decoration: line-through; }
+  .player-hit { font-size: 10px; font-weight: 700; padding: 1px 8px; border-radius: 10px; background: #fde68a; color: #92400e; }
+  .out-marker { position: absolute; top: 4px; right: 4px; font-size: 9px; font-weight: 700; color: white; background: #f59e0b; padding: 1px 6px; border-radius: 6px; }
+  .empty-zone { grid-column: 1 / -1; font-size: 11px; color: #d1d5db; text-align: center; padding: 14px; font-weight: 600; }
+
+  /* シート */
+  .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+  .backdrop.show { display: block; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; background: white; border-radius: 22px 22px 0 0; padding: 1rem 1rem 1.5rem; z-index: 101; transform: translateY(100%); transition: transform 0.25s ease; max-height: 80vh; overflow-y: auto; }
+  .sheet.show { transform: translateY(0); }
+  .sheet-grip { width: 36px; height: 4px; background: #d1d5db; border-radius: 2px; margin: 0 auto 12px; }
+  .sheet-out { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; font-size: 15px; font-weight: 700; color: #1f2937; }
+  .sheet-out .avatar { width: 36px; height: 36px; }
+  .sheet-out-name { color: #dc2626; }
+  .sheet-sub { font-size: 11px; text-align: center; color: #9ca3af; margin-bottom: 14px; }
+  .sheet-zone-label { font-size: 10px; font-weight: 700; color: #9ca3af; margin: 6px 0 6px; letter-spacing: 1px; }
+  .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .sheet-btn { border-radius: 14px; border: 2px solid; background: white; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 8px 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .sheet-btn.a { border-color: #fca5a5; background: #fff1f2; }
+  .sheet-btn.b { border-color: #93c5fd; background: #eff6ff; }
+  .sheet-btn.out { border-style: dashed; border-color: #fbbf24; background: #fffbeb; }
+  .sheet-btn .sb-name { font-size: 12px; font-weight: 700; }
+  .sheet-btn.a .sb-name { color: #991b1b; }
+  .sheet-btn.b .sb-name { color: #1e40af; }
+  .sheet-btn.out .sb-name { color: #92400e; }
+  .sheet-btn .sb-tag { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: #f59e0b; color: white; }
+  .sheet-btn:active { transform: scale(0.94); }
+  .sheet-skip { width: 100%; padding: 14px; border-radius: 50px; border: 1.5px solid #e5e7eb; background: white; color: #6b7280; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+  .undo-toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #1f2937; color: white; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 600; display: none; z-index: 200; box-shadow: 0 4px 16px rgba(0,0,0,0.25); white-space: nowrap; }
+  .undo-toast.show { display: flex; gap: 12px; align-items: center; }
+  .undo-toast button { background: #fbbf24; color: #78350f; border: none; padding: 4px 12px; border-radius: 20px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚽ 第1試合（A3：サムネ表示）</h1>
+  <p>顔と名前で誰かすぐわかる</p>
+</div>
+
+<div class="nav">
+  <a href="mock-a.html">A</a>
+  <a href="mock-a2.html">A2</a>
+  <a href="mock-a3.html">[ A3 ]</a>
+  <a href="mock-b.html">B</a>
+  <a href="mock-c.html">C</a>
+</div>
+
+<div class="wrap">
+
+<div class="note">
+  💡 サムネはダミー（自動生成）。本番では <code>photoUrl</code> をスプレッドシートに足せば実写差替え可。
+</div>
+
+<div class="summary">
+  <div class="sum-card a">
+    <div class="sum-label">🔴 A 内野</div>
+    <div class="sum-val a" id="in-a">5</div>
+    <div class="sum-sub">退場 <span id="out-a">0</span>人</div>
+  </div>
+  <div class="sum-card b">
+    <div class="sum-label">🔵 B 内野</div>
+    <div class="sum-val b" id="in-b">5</div>
+    <div class="sum-sub">退場 <span id="out-b">0</span>人</div>
+  </div>
+</div>
+
+<div class="team-box a">
+  <div class="team-title a"><span>🔴 チームA</span></div>
+  <div class="zone-label">🟥 内野</div>
+  <div class="players" id="players-in-a"></div>
+  <div class="zone-label">🟨 退場</div>
+  <div class="players" id="players-out-a"></div>
+</div>
+
+<div class="team-box b">
+  <div class="team-title b"><span>🔵 チームB</span></div>
+  <div class="zone-label">🟦 内野</div>
+  <div class="players" id="players-in-b"></div>
+  <div class="zone-label">🟨 退場</div>
+  <div class="players" id="players-out-b"></div>
+</div>
+
+</div>
+
+<div class="backdrop" id="backdrop" onclick="closeSheet(true)"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-out">
+    <div class="avatar" id="sheet-out-avatar"></div>
+    <span><span class="sheet-out-name" id="sheet-out-name">？</span> を当てたのは？</span>
+  </div>
+  <div class="sheet-sub">内野・退場者どちらでもOK</div>
+  <div class="sheet-zone-label">🟥 内野から</div>
+  <div class="sheet-grid" id="sheet-in"></div>
+  <div class="sheet-zone-label">🟨 退場者から</div>
+  <div class="sheet-grid" id="sheet-out"></div>
+  <button class="sheet-skip" onclick="closeSheet(true)">わからない / スキップ</button>
+</div>
+
+<div class="undo-toast" id="undo-toast">
+  <span id="undo-msg"></span>
+  <button onclick="undo()">取消</button>
+</div>
+
+<script>
+const teamA = ['たろう','じろう','さぶろう','しろう','ごろう'];
+const teamB = ['はなこ','ようこ','みちこ','けいこ','れいこ'];
+const state = {};
+[...teamA, ...teamB].forEach(n => state[n] = { zone: 'in', hit: 0 });
+
+const AVATAR_STYLE = 'adventurer'; // DiceBear style. 'fun-emoji','bottts','thumbs' なども試せる
+function avatarUrl(name) {
+  return `https://api.dicebear.com/7.x/${AVATAR_STYLE}/svg?seed=${encodeURIComponent(name)}&backgroundColor=ffd5dc,c0aede,ffdfbf,b6e3f4,d1d4f9`;
+}
+
+let pendingOut = null;
+let lastAction = null;
+
+function el(id) { return document.getElementById(id); }
+
+function render() {
+  ['a','b'].forEach(t => {
+    const list = t === 'a' ? teamA : teamB;
+    const inMembers = list.filter(n => state[n].zone === 'in');
+    const outMembers = list.filter(n => state[n].zone === 'out');
+    const inGrid = el('players-in-' + t);
+    const outGrid = el('players-out-' + t);
+    inGrid.innerHTML = '';
+    outGrid.innerHTML = '';
+    if (inMembers.length === 0) inGrid.innerHTML = '<div class="empty-zone">（全員退場）</div>';
+    if (outMembers.length === 0) outGrid.innerHTML = '<div class="empty-zone">退場者はまだいません</div>';
+    inMembers.forEach(name => inGrid.appendChild(buildCard(name, t, 'in')));
+    outMembers.forEach(name => outGrid.appendChild(buildCard(name, t, 'out')));
+    el('in-' + t).textContent = inMembers.length;
+    el('out-' + t).textContent = outMembers.length;
+  });
+}
+
+function buildAvatar(name) {
+  const a = document.createElement('div');
+  a.className = 'avatar';
+  const img = document.createElement('img');
+  img.src = avatarUrl(name);
+  img.alt = name;
+  a.appendChild(img);
+  return a;
+}
+
+function buildCard(name, team, zone) {
+  const s = state[name];
+  const d = document.createElement('div');
+  d.className = 'player ' + zone + ' ' + team;
+  if (zone === 'out') {
+    const m = document.createElement('div');
+    m.className = 'out-marker';
+    m.textContent = '退';
+    d.appendChild(m);
+  }
+  d.appendChild(buildAvatar(name));
+  const nm = document.createElement('div');
+  nm.className = 'player-name';
+  nm.textContent = name;
+  d.appendChild(nm);
+  if (s.hit) {
+    const h = document.createElement('div');
+    h.className = 'player-hit';
+    h.textContent = '⚡' + s.hit;
+    d.appendChild(h);
+  }
+  d.onclick = () => tapPlayer(name, team, zone);
+  return d;
+}
+
+function tapPlayer(name, team, zone) {
+  if (zone === 'out') {
+    state[name].zone = 'in';
+    showUndo(name + ' を内野に戻しました');
+    lastAction = null;
+    render();
+    return;
+  }
+  pendingOut = { name, team };
+  state[name].zone = 'out';
+  render();
+  openSheet(name, team);
+}
+
+function openSheet(outName, outTeam) {
+  el('sheet-out-name').textContent = outName;
+  const av = el('sheet-out-avatar');
+  av.innerHTML = '';
+  const img = document.createElement('img');
+  img.src = avatarUrl(outName);
+  av.appendChild(img);
+  const opp = outTeam === 'a' ? 'b' : 'a';
+  const list = opp === 'a' ? teamA : teamB;
+  const inList = list.filter(n => state[n].zone === 'in');
+  const outList = list.filter(n => state[n].zone === 'out');
+  const inG = el('sheet-in');
+  const outG = el('sheet-out');
+  inG.innerHTML = '';
+  outG.innerHTML = '';
+  if (inList.length === 0) inG.innerHTML = '<div class="empty-zone">なし</div>';
+  if (outList.length === 0) outG.innerHTML = '<div class="empty-zone">なし</div>';
+  inList.forEach(n => inG.appendChild(buildSheetBtn(n, opp, 'in')));
+  outList.forEach(n => outG.appendChild(buildSheetBtn(n, opp, 'out')));
+  el('backdrop').classList.add('show');
+  el('sheet').classList.add('show');
+}
+
+function buildSheetBtn(name, team, zone) {
+  const b = document.createElement('button');
+  b.className = 'sheet-btn ' + team + (zone === 'out' ? ' out' : '');
+  b.appendChild(buildAvatar(name));
+  const nm = document.createElement('div');
+  nm.className = 'sb-name';
+  nm.textContent = name;
+  b.appendChild(nm);
+  if (zone === 'out') {
+    const t = document.createElement('span');
+    t.className = 'sb-tag';
+    t.textContent = '退場';
+    b.appendChild(t);
+  }
+  b.onclick = () => recordHit(name);
+  return b;
+}
+
+function closeSheet(skipped) {
+  el('backdrop').classList.remove('show');
+  el('sheet').classList.remove('show');
+  if (skipped && pendingOut) {
+    lastAction = { type: 'out', name: pendingOut.name };
+    showUndo(pendingOut.name + ' を退場');
+  }
+  pendingOut = null;
+}
+
+function recordHit(thrower) {
+  state[thrower].hit++;
+  const z = state[thrower].zone === 'out' ? '退場' : '内野';
+  lastAction = { type: 'hitout', out: pendingOut.name, thrower };
+  showUndo(`${thrower}(${z}) → ${pendingOut.name} を当てた`);
+  closeSheet(false);
+  render();
+}
+
+function showUndo(msg) {
+  el('undo-msg').textContent = msg;
+  el('undo-toast').classList.add('show');
+  clearTimeout(window._t);
+  window._t = setTimeout(() => el('undo-toast').classList.remove('show'), 4000);
+}
+
+function undo() {
+  if (!lastAction) { el('undo-toast').classList.remove('show'); return; }
+  if (lastAction.type === 'out') state[lastAction.name].zone = 'in';
+  if (lastAction.type === 'hitout') {
+    state[lastAction.out].zone = 'in';
+    state[lastAction.thrower].hit = Math.max(0, state[lastAction.thrower].hit - 1);
+  }
+  lastAction = null;
+  el('undo-toast').classList.remove('show');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
