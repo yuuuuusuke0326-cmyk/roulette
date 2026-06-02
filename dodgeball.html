@@ -165,6 +165,17 @@
   .instruction { text-align: center; font-size: 13px; color: #6b7280; margin-bottom: 0.75rem; font-weight: 600; }
   .loading-msg { text-align: center; font-size: 14px; color: #3b82f6; font-weight: 600; padding: 2rem 0; }
   .error-msg { text-align: center; color: #dc2626; font-size: 13px; padding: 0.75rem; background: #fff1f2; border-radius: 12px; border: 1px solid #fca5a5; margin-bottom: 1rem; }
+  /* 手動チーム分け */
+  .manual-row { display: flex; align-items: center; padding: 8px 10px; border-bottom: 0.5px solid #f3f4f6; gap: 8px; }
+  .manual-row:last-child { border-bottom: none; }
+  .manual-name { flex: 1; font-size: 14px; font-weight: 600; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .manual-name.is-parent { color: #059669; }
+  .manual-toggle { display: flex; gap: 4px; }
+  .manual-btn { width: 36px; height: 32px; border-radius: 8px; border: 1.5px solid #e5e7eb; background: white; font-size: 13px; font-weight: 700; cursor: pointer; color: #9ca3af; -webkit-tap-highlight-color: transparent; transition: all 0.1s; }
+  .manual-btn:active { transform: scale(0.92); }
+  .manual-btn.active-a { background: #dc2626; border-color: #dc2626; color: white; }
+  .manual-btn.active-b { background: #2563eb; border-color: #2563eb; color: white; }
+
   .confetti-wrap { position: fixed; top:0; left:0; right:0; bottom:0; pointer-events:none; overflow:hidden; z-index:9999; }
   .confetti-piece { position:absolute; top:-20px; animation:confetti-fall linear forwards; }
 </style>
@@ -222,8 +233,29 @@
       <p class="preview-label">👥 今日の参加者</p>
       <div class="preview-chips" id="preview-chips"></div>
     </div>
-    <button class="btn-orange" id="btn-start-roulette" onclick="startRoulette()">🎯 チーム分けスタート！</button>
+    <button class="btn-orange" id="btn-start-roulette" onclick="startRoulette()">🎯 ルーレットで分ける</button>
+    <button class="btn-primary" id="btn-go-manual" onclick="goToManual()" style="background:linear-gradient(135deg,#059669,#047857);box-shadow:0 4px 14px rgba(5,150,105,0.35);">✋ 手動でチーム分け</button>
     <button class="btn-ghost" id="btn-back-from-roulette" onclick="showPage('select')">← メンバーを変更する</button>
+  </div>
+
+  <!-- ページ2-b: 手動チーム分け -->
+  <div class="page" id="page-manual">
+    <p class="instruction">タップして チームA → チームB → 未割当 を切り替え</p>
+    <div class="summary-row">
+      <div class="summary-card">
+        <p class="summary-label">🔴 チームA</p>
+        <p class="summary-val summary-val-a" id="manual-count-a">0人</p>
+      </div>
+      <div class="summary-card">
+        <p class="summary-label">🔵 チームB</p>
+        <p class="summary-val summary-val-b" id="manual-count-b">0人</p>
+      </div>
+    </div>
+    <div class="card">
+      <div id="manual-grid"></div>
+    </div>
+    <button class="btn-primary" id="btn-confirm-manual" onclick="confirmManual()" disabled>このチームで試合開始 →</button>
+    <button class="btn-ghost" onclick="showPage('roulette')">← 戻る</button>
   </div>
 
   <!-- ページ3: 試合入力（新UI） -->
@@ -320,7 +352,7 @@ function el(id) { return document.getElementById(id); }
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   el('page-' + name).classList.add('active');
-  const stepMap = { select:1, roulette:2, match:3, result:4, summary:5 };
+  const stepMap = { select:1, roulette:2, manual:2, match:3, result:4, summary:5 };
   const cur = stepMap[name] || 1;
   for (let i = 1; i <= 4; i++) {
     const s = el('step' + i);
@@ -332,6 +364,7 @@ function showPage(name) {
   const headers = {
     select:  ['⚽ ドッジボール記録','メンバーを選んで試合を記録しよう','blue'],
     roulette:['🎯 チーム分けルーレット','スタートを押してね！','orange'],
+    manual:  ['✋ 手動チーム分け','各メンバーをチームに振り分けよう','blue'],
     match:   ['⚽ 試合記録','退場チェックとヒット数を入力しよう','blue'],
     result:  ['🏆 試合結果','次の試合へ進もう','blue'],
     summary: ['📊 本日の結果','お疲れ様でした！','blue']
@@ -440,6 +473,78 @@ function goToRoulette() {
   el('btn-back-from-roulette').style.display = '';
   isReshuffle = false;
   showPage('roulette');
+}
+
+let manualAssign = {}; // { 名前: 'A' | 'B' | null }
+
+function goToManual() {
+  const pool = isReshuffle
+    ? [...teams.a, ...teams.b]
+    : [...Array.from(selectedMembers), ...Array.from(selectedParents)];
+  manualAssign = {};
+  if (isReshuffle) {
+    teams.a.forEach(n => { manualAssign[n] = 'A'; });
+    teams.b.forEach(n => { manualAssign[n] = 'B'; });
+  } else {
+    pool.forEach(n => { manualAssign[n] = null; });
+  }
+  renderManualGrid(pool);
+  updateManualCounts();
+  showPage('manual');
+}
+
+function renderManualGrid(pool) {
+  const grid = el('manual-grid');
+  grid.innerHTML = '';
+  pool.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'manual-row';
+    const nm = document.createElement('span');
+    nm.className = 'manual-name' + (parentSet.has(name) || selectedParents.has(name) ? ' is-parent' : '');
+    nm.textContent = name;
+    const tg = document.createElement('div');
+    tg.className = 'manual-toggle';
+    const cur = manualAssign[name];
+    ['A','B'].forEach(team => {
+      const b = document.createElement('button');
+      b.className = 'manual-btn' + (cur === team ? ' active-' + team.toLowerCase() : '');
+      b.textContent = team;
+      b.onclick = () => {
+        manualAssign[name] = (manualAssign[name] === team) ? null : team;
+        renderManualGrid(pool);
+        updateManualCounts();
+      };
+      tg.appendChild(b);
+    });
+    row.appendChild(nm);
+    row.appendChild(tg);
+    grid.appendChild(row);
+  });
+}
+
+function updateManualCounts() {
+  const vals = Object.values(manualAssign);
+  const a = vals.filter(v => v === 'A').length;
+  const b = vals.filter(v => v === 'B').length;
+  el('manual-count-a').textContent = a + '人';
+  el('manual-count-b').textContent = b + '人';
+  el('btn-confirm-manual').disabled = !(a >= 1 && b >= 1);
+}
+
+function confirmManual() {
+  const a = [], b = [];
+  Object.entries(manualAssign).forEach(([n, t]) => {
+    if (t === 'A') a.push(n);
+    else if (t === 'B') b.push(n);
+  });
+  teams = { a, b };
+  if (!isReshuffle) {
+    parentSet = new Set(Array.from(selectedParents).filter(p => manualAssign[p]));
+  }
+  isReshuffle = false;
+  el('btn-back-from-roulette').style.display = '';
+  initMatch();
+  showPage('match');
 }
 
 function shuffle(arr) {
