@@ -165,28 +165,32 @@
   .instruction { text-align: center; font-size: 13px; color: #6b7280; margin-bottom: 0.75rem; font-weight: 600; }
   .loading-msg { text-align: center; font-size: 14px; color: #3b82f6; font-weight: 600; padding: 2rem 0; }
   .error-msg { text-align: center; color: #dc2626; font-size: 13px; padding: 0.75rem; background: #fff1f2; border-radius: 12px; border: 1px solid #fca5a5; margin-bottom: 1rem; }
-  /* 試合記録 新UI（イベント駆動・内野/退場） */
-  .zone-label { font-size: 10px; font-weight: 700; color: #9ca3af; letter-spacing: 1px; margin: 4px 0 4px; padding-left: 4px; }
-  .team-zone-box { background: white; border-radius: 14px; padding: 0.65rem; margin-bottom: 0.6rem; border: 2px solid; }
+  /* 試合記録 新UI（A5：横並びコンパクト） */
+  .teams-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 0.5rem; }
+  .team-zone-box { background: white; border-radius: 12px; padding: 0.4rem; border: 2px solid; min-height: 200px; }
   .team-zone-box.a { border-color: #fca5a5; }
   .team-zone-box.b { border-color: #93c5fd; }
-  .team-zone-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .team-zone-title { font-size: 12px; font-weight: 700; padding: 0 2px 4px; border-bottom: 1px dashed #e5e7eb; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
   .team-zone-title.a { color: #991b1b; }
   .team-zone-title.b { color: #1e40af; }
-  .players-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .player-card { border-radius: 16px; border: 3px solid; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.15s; user-select: none; padding: 18px 8px; position: relative; min-height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
-  .player-card:active { transform: scale(0.95); }
+  .alive-badge { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+  .team-zone-title.a .alive-badge { background: #fee2e2; color: #991b1b; }
+  .team-zone-title.b .alive-badge { background: #dbeafe; color: #1e40af; }
+  .zone-label { font-size: 9px; font-weight: 700; color: #9ca3af; letter-spacing: 0.5px; margin: 4px 0 3px; padding-left: 2px; }
+  .players-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .player-card { border-radius: 9px; border: 2px solid; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; padding: 8px 2px 6px; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; position: relative; transition: transform 0.12s; }
+  .player-card:active { transform: scale(0.92); }
   .player-card.in.a { border-color: #fca5a5; background: #fff1f2; }
   .player-card.in.b { border-color: #93c5fd; background: #eff6ff; }
   .player-card.out { border-color: #fbbf24; background: #fffbeb; border-style: dashed; }
-  .player-card-name { font-size: 22px; font-weight: 800; line-height: 1.1; text-align: center; letter-spacing: 1px; }
+  .player-card-name { font-size: 14px; font-weight: 800; line-height: 1.05; text-align: center; }
   .player-card.in.a .player-card-name { color: #991b1b; }
   .player-card.in.b .player-card-name { color: #1e40af; }
-  .player-card.out .player-card-name { color: #92400e; text-decoration: line-through; font-weight: 700; }
-  .player-card-name.parent::before { content: '👨 '; font-size: 14px; }
-  .player-card-hit { font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 10px; background: #fde68a; color: #92400e; }
-  .out-marker { position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 700; color: white; background: #f59e0b; padding: 2px 8px; border-radius: 8px; }
-  .empty-zone { grid-column: 1 / -1; font-size: 11px; color: #d1d5db; text-align: center; padding: 14px; font-weight: 600; }
+  .player-card.out .player-card-name { color: #92400e; text-decoration: line-through; font-size: 12px; }
+  .player-card-name.parent::before { content: '👨'; font-size: 10px; margin-right: 1px; }
+  .player-card-hit { font-size: 9px; font-weight: 700; padding: 0 6px; border-radius: 8px; background: #fde68a; color: #92400e; line-height: 1.4; }
+  .out-marker { position: absolute; top: 2px; right: 3px; font-size: 8px; font-weight: 700; color: white; background: #f59e0b; padding: 0 5px; border-radius: 5px; line-height: 1.5; }
+  .empty-zone { grid-column: 1 / -1; font-size: 9px; color: #d1d5db; text-align: center; padding: 6px; font-weight: 600; }
 
   .sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
   .sheet-backdrop.show { display: block; }
@@ -320,20 +324,21 @@
       </div>
     </div>
 
-    <div class="team-zone-box a">
-      <div class="team-zone-title a"><span>🔴 チームA</span></div>
-      <div class="zone-label">🟥 内野</div>
-      <div class="players-grid" id="players-in-a"></div>
-      <div class="zone-label">🟨 退場</div>
-      <div class="players-grid" id="players-out-a"></div>
-    </div>
-
-    <div class="team-zone-box b">
-      <div class="team-zone-title b"><span>🔵 チームB</span></div>
-      <div class="zone-label">🟦 内野</div>
-      <div class="players-grid" id="players-in-b"></div>
-      <div class="zone-label">🟨 退場</div>
-      <div class="players-grid" id="players-out-b"></div>
+    <div class="teams-row">
+      <div class="team-zone-box a">
+        <div class="team-zone-title a"><span>🔴 A</span><span class="alive-badge" id="alive-a">0/0</span></div>
+        <div class="zone-label">🟥 内野</div>
+        <div class="players-grid" id="players-in-a"></div>
+        <div class="zone-label">🟨 退場</div>
+        <div class="players-grid" id="players-out-a"></div>
+      </div>
+      <div class="team-zone-box b">
+        <div class="team-zone-title b"><span>🔵 B</span><span class="alive-badge" id="alive-b">0/0</span></div>
+        <div class="zone-label">🟦 内野</div>
+        <div class="players-grid" id="players-in-b"></div>
+        <div class="zone-label">🟨 退場</div>
+        <div class="players-grid" id="players-out-b"></div>
+      </div>
     </div>
 
     <button class="btn-orange" onclick="finishMatch()">試合終了 → 勝敗を記録</button>
@@ -817,6 +822,8 @@ function updateMatchSummary() {
   const inB = teams.b.filter(n => matchState[n]?.zone === 'in').length;
   el('summary-out-a').textContent = inA + '人';
   el('summary-out-b').textContent = inB + '人';
+  el('alive-a').textContent = inA + '/' + teams.a.length;
+  el('alive-b').textContent = inB + '/' + teams.b.length;
 }
 
 function initStats(members) {
