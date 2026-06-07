@@ -118,15 +118,17 @@
   .zone-marker.elim { background: #6b7280; }
   .empty-z { grid-column: 1 / -1; font-size: 9px; color: #d1d5db; text-align: center; padding: 6px; font-weight: 600; }
 
-  /* 相手チームカウンタ */
-  .their-counter { background: white; border-radius: 9px; padding: 0.6rem 0.3rem; margin-bottom: 6px; }
-  .their-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
-  .their-zone-label { font-size: 9px; font-weight: 700; color: #991b1b; width: 28px; }
-  .their-big-num { font-size: 22px; font-weight: 800; color: #dc2626; flex: 1; text-align: center; line-height: 1; }
-  .their-btn { border: 2px solid #fca5a5; background: white; color: #991b1b; width: 28px; height: 28px; border-radius: 50%; font-size: 16px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0; }
-  .their-btn:active { transform: scale(0.92); }
-  .their-btn.minus { color: #991b1b; }
-  .their-btn.plus { background: #fca5a5; color: white; }
+  /* 相手チームカウンタ（簡略版） */
+  .their-counter { background: white; border-radius: 10px; padding: 0.5rem 0.4rem 0.6rem; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .their-rem-label { font-size: 10px; font-weight: 700; color: #991b1b; letter-spacing: 1px; }
+  .their-big-num { font-size: 54px; font-weight: 900; color: #dc2626; line-height: 0.95; letter-spacing: -1px; text-shadow: 0 2px 4px rgba(220,38,38,0.15); }
+  .their-rem-sub { font-size: 10px; color: #9ca3af; font-weight: 600; }
+  .their-hit-btn { width: 100%; padding: 14px 8px; border-radius: 30px; border: none; background: linear-gradient(135deg,#f87171,#dc2626); color: white; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(220,38,38,0.4); -webkit-tap-highlight-color: transparent; letter-spacing: 1px; margin-top: 4px; }
+  .their-hit-btn:active { transform: scale(0.95); }
+  .their-hit-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; background: #9ca3af; }
+  .their-undo-link { font-size: 11px; color: #9ca3af; background: none; border: none; cursor: pointer; padding: 4px; margin-top: 2px; text-decoration: underline; }
+  .their-undo-link:active { color: #6b7280; }
+  .their-undo-link:disabled { opacity: 0.3; cursor: not-allowed; text-decoration: none; }
 
   /* シート */
   .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
@@ -303,20 +305,12 @@
       <div class="team-col them">
         <div class="team-head them"><span>🔴 相手</span><span class="alive" id="alive-them">8</span></div>
         <div class="their-counter">
-          <div class="zone-label" style="color:#991b1b">🟥 内野 残り</div>
-          <div class="their-row">
-            <button class="their-btn minus" onclick="adjustThem('in', -1)">−</button>
-            <div class="their-big-num" id="them-in">5</div>
-            <button class="their-btn plus" onclick="adjustThem('in', 1)">+</button>
-          </div>
-          <div class="zone-label" style="color:#991b1b">🟨 外野 残り</div>
-          <div class="their-row">
-            <button class="their-btn minus" onclick="adjustThem('out', -1)">−</button>
-            <div class="their-big-num" id="them-out">3</div>
-            <button class="their-btn plus" onclick="adjustThem('out', 1)">+</button>
-          </div>
+          <div class="their-rem-label">残りベスト</div>
+          <div class="their-big-num" id="them-remaining">8</div>
+          <div class="their-rem-sub">人</div>
+          <button class="their-hit-btn" id="btn-hit-them" onclick="hitOpponent()">⚡ 相手をヒット</button>
+          <button class="their-undo-link" id="btn-undo-them" onclick="undoLast()" disabled>↩ 直前を取消</button>
         </div>
-        <p style="font-size:9px;color:#9ca3af;text-align:center;padding:0 4px">相手退場時は<br>「−」 を押す</p>
       </div>
     </div>
 
@@ -437,8 +431,8 @@ let subSelectedPlaying = null;
 let subSelectedBench = null;
 let substitutions = [];
 
-let pendingOut = null;               // { name, type: 'zone-pick' | null }
-let pendingTheirZone = null;         // 相手退場時: 'in' or 'out'
+let pendingOut = null;               // { name, prevZone }
+let pendingTheirHit = false;         // 相手退場シート表示中フラグ
 let lastAction = null;
 
 const el = id => document.getElementById(id);
@@ -617,10 +611,9 @@ function goToHalf(num) {
   halfNum = num;
   // halfState を初期化（各メンバーを roles の役割で配置、全員生存）
   halfState = {
-    ourZones: {},        // name → 'in'|'out'|'eliminated'
-    theirIn: 5,
-    theirOut: 3,
-    hits: {},            // name → number
+    ourZones: {},          // name → 'in'|'out'|'eliminated'
+    theirRemaining: 8,     // 相手のゲームベスト着用者数（内野＋外野の合計）
+    hits: {},              // name → number
     hitInThisHalf: new Set()  // 内野で当てられて外野に出た選手（再昇格不可）
   };
   participants.forEach(name => {
@@ -628,7 +621,7 @@ function goToHalf(num) {
     halfState.hits[name] = 0;
   });
   pendingOut = null;
-  pendingTheirZone = null;
+  pendingTheirHit = false;
   lastAction = null;
   hideUndoToast();
 
@@ -657,11 +650,12 @@ function renderMatch() {
   el('us-best').textContent = aliveUs;
 
   // 相手
-  el('them-in').textContent = halfState.theirIn;
-  el('them-out').textContent = halfState.theirOut;
-  const aliveThem = halfState.theirIn + halfState.theirOut;
+  const aliveThem = halfState.theirRemaining;
+  el('them-remaining').textContent = aliveThem;
   el('alive-them').textContent = aliveThem;
   el('them-best').textContent = aliveThem;
+  el('btn-hit-them').disabled = aliveThem <= 0;
+  el('btn-undo-them').disabled = !lastAction;
 }
 
 function buildPlayerCard(name, zone) {
@@ -815,28 +809,17 @@ function closePromoteSheet() {
   }
 }
 
-// 相手チームのカウント調整
-function adjustThem(zone, delta) {
-  const key = zone === 'in' ? 'theirIn' : 'theirOut';
-  const newVal = halfState[key] + delta;
-  if (newVal < 0) return;
-  if (delta < 0) {
-    // 相手退場 → 「誰が当てた？」シート
-    pendingTheirZone = zone;
-    halfState[key] = newVal;
-    renderMatch();
-    openHitSheet(zone);
-  } else {
-    // 復活（取消用途）
-    halfState[key] = newVal;
-    lastAction = { type: 'them-revive', zone };
-    toast('相手' + (zone === 'in' ? '内野' : '外野') + ' を1人復活');
-    renderMatch();
-  }
+// 相手をヒット（残りベスト数を1減らし、誰が当てたかシート）
+function hitOpponent() {
+  if (halfState.theirRemaining <= 0) return;
+  halfState.theirRemaining--;
+  pendingTheirHit = true;
+  renderMatch();
+  openHitSheet();
 }
 
-function openHitSheet(theirZoneLabel) {
-  el('hit-sheet').querySelector('.sheet-title').innerHTML = '🎯 相手' + (theirZoneLabel === 'in' ? '内野' : '外野') + ' を退場させたのは？';
+function openHitSheet() {
+  el('hit-sheet').querySelector('.sheet-title').innerHTML = '🎯 相手を退場させたのは？';
   const inList = participants.filter(n => halfState.ourZones[n] === 'in');
   const outList = participants.filter(n => halfState.ourZones[n] === 'out');
   const inG = el('hit-grid-in');
@@ -871,16 +854,17 @@ function buildHitBtn(name, zone) {
 function closeHitSheet(skipped) {
   el('hit-backdrop').classList.remove('show');
   el('hit-sheet').classList.remove('show');
-  if (skipped && pendingTheirZone) {
-    lastAction = { type: 'them-hit', zone: pendingTheirZone, thrower: null };
-    toast('相手' + (pendingTheirZone === 'in' ? '内野' : '外野') + ' を1人退場');
+  if (skipped && pendingTheirHit) {
+    lastAction = { type: 'them-hit', thrower: null };
+    toast('相手を1人退場');
   }
-  pendingTheirZone = null;
+  pendingTheirHit = false;
+  renderMatch();
 }
 
 function recordThemHit(thrower) {
   halfState.hits[thrower] = (halfState.hits[thrower] || 0) + 1;
-  lastAction = { type: 'them-hit', zone: pendingTheirZone, thrower };
+  lastAction = { type: 'them-hit', thrower };
   toast(firstName(thrower) + ' → 相手を退場');
   closeHitSheet(false);
   renderMatch();
@@ -900,12 +884,8 @@ function undoLast() {
     halfState.ourZones[a.promoted] = 'out';
     halfState.hitInThisHalf?.delete(a.demoted);
   } else if (a.type === 'them-hit') {
-    const key = a.zone === 'in' ? 'theirIn' : 'theirOut';
-    halfState[key]++;
+    halfState.theirRemaining++;
     if (a.thrower) halfState.hits[a.thrower] = Math.max(0, (halfState.hits[a.thrower] || 0) - 1);
-  } else if (a.type === 'them-revive') {
-    const key = a.zone === 'in' ? 'theirIn' : 'theirOut';
-    halfState[key]--;
   }
   lastAction = null;
   hideUndoToast();
@@ -923,7 +903,7 @@ function hideUndoToast() { el('undo-toast').classList.remove('show'); }
 // 半終了
 function finishHalf() {
   const ourBest = participants.filter(n => halfState.ourZones[n] === 'in' || halfState.ourZones[n] === 'out').length;
-  const theirBest = halfState.theirIn + halfState.theirOut;
+  const theirBest = halfState.theirRemaining;
   halfResults[halfNum - 1] = {
     num: halfNum,
     ourBest,
