@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="他校試合記録">
+<title>他校試合記録</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f0f9ff; min-height: 100vh; padding-bottom: 4rem; }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+
+  .header { padding: 0.7rem 1rem; text-align: center; border-radius: 0 0 18px 18px; margin-bottom: 0.75rem; background: linear-gradient(135deg,#7c3aed,#5b21b6); box-shadow: 0 4px 14px rgba(124,58,237,0.25); }
+  .header h1 { color: white; font-size: 17px; font-weight: 700; }
+  .header p { color: rgba(255,255,255,0.85); font-size: 12px; margin-top: 2px; }
+
+  .wrap { padding: 0 0.75rem; max-width: 640px; margin: 0 auto; }
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+
+  /* ステップ */
+  .steps { display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; flex-wrap: nowrap; padding: 0 4px; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+  .step-circle { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border: 2px solid #ddd6fe; background: white; color: #7c3aed; transition: all 0.3s; }
+  .step.active .step-circle { background: linear-gradient(135deg,#7c3aed,#5b21b6); border-color: transparent; color: white; box-shadow: 0 2px 6px rgba(124,58,237,0.4); }
+  .step.done .step-circle { background: #22c55e; border-color: transparent; color: white; }
+  .step-label { font-size: 9px; color: #6b21a8; font-weight: 600; white-space: nowrap; }
+  .step-line { height: 2px; flex: 1; background: #ddd6fe; margin: 0 2px 14px; transition: background 0.3s; max-width: 24px; }
+  .step-line.done { background: #22c55e; }
+
+  .card { background: white; border-radius: 12px; padding: 0.75rem; margin-bottom: 0.5rem; border: 1.5px solid #ede9fe; }
+  .field-label { font-size: 11px; font-weight: 700; color: #6b21a8; margin-bottom: 4px; letter-spacing: 0.5px; }
+  .field-input { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd6fe; border-radius: 10px; font-size: 14px; font-family: inherit; }
+  .field-input:focus { outline: none; border-color: #7c3aed; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  .section-title { font-size: 13px; font-weight: 700; color: #5b21b6; }
+  .btn-select-all { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 18px; border: 1.5px solid #7c3aed; background: white; color: #7c3aed; cursor: pointer; }
+  .btn-select-all:active { background: #f5f3ff; }
+
+  .member-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .member-item { padding: 10px 6px; border-radius: 10px; border: 2px solid #ddd6fe; background: white; cursor: pointer; text-align: center; font-size: 13px; font-weight: 600; color: #5b21b6; transition: all 0.15s; user-select: none; -webkit-tap-highlight-color: transparent; animation: pop 0.2s ease; }
+  .member-item:active { transform: scale(0.96); }
+  .member-item.selected { background: linear-gradient(135deg,#7c3aed,#5b21b6); border-color: transparent; color: white; box-shadow: 0 2px 6px rgba(124,58,237,0.35); }
+  .member-item.selected::before { content: '✓ '; font-size: 11px; }
+  .parent-card { background: white; border-radius: 12px; padding: 0.6rem; border: 1.5px solid #d1fae5; margin-bottom: 0.5rem; }
+  .parent-item { padding: 8px 4px; border-radius: 10px; border: 2px solid #6ee7b7; background: white; cursor: pointer; text-align: center; font-size: 12px; font-weight: 600; color: #059669; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .parent-item.selected { background: linear-gradient(135deg,#059669,#047857); border-color: transparent; color: white; }
+  .parent-item.selected::before { content: '✓ '; font-size: 11px; }
+
+  .count-line { text-align: center; font-size: 12px; color: #6b21a8; font-weight: 600; margin-bottom: 0.6rem; min-height: 18px; }
+  .warn { color: #b45309; font-weight: 700; font-size: 11px; }
+
+  /* スタメン振り分け */
+  .role-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 0.6rem; }
+  .role-sum-card { background: white; border-radius: 10px; padding: 0.4rem; text-align: center; border: 2px solid; }
+  .role-sum-card.in { border-color: #fca5a5; }
+  .role-sum-card.out { border-color: #fcd34d; }
+  .role-sum-card.bench { border-color: #d1d5db; }
+  .role-sum-label { font-size: 10px; font-weight: 700; color: #6b7280; }
+  .role-sum-val { font-size: 18px; font-weight: 800; line-height: 1; margin-top: 2px; }
+  .role-sum-card.in .role-sum-val { color: #dc2626; }
+  .role-sum-card.out .role-sum-val { color: #d97706; }
+  .role-sum-card.bench .role-sum-val { color: #6b7280; }
+  .role-sum-target { font-size: 10px; color: #9ca3af; margin-top: 1px; }
+
+  .role-row { display: flex; align-items: center; padding: 6px 8px; gap: 6px; border-bottom: 0.5px solid #f3f4f6; }
+  .role-row:last-child { border-bottom: none; }
+  .role-name { flex: 1; font-size: 14px; font-weight: 700; color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .role-name.parent { color: #047857; }
+  .role-toggle { display: flex; gap: 3px; }
+  .role-btn { padding: 6px 8px; border-radius: 8px; border: 1.5px solid #e5e7eb; background: white; font-size: 11px; font-weight: 700; cursor: pointer; color: #9ca3af; -webkit-tap-highlight-color: transparent; min-width: 32px; }
+  .role-btn.active.in { background: #dc2626; border-color: #dc2626; color: white; }
+  .role-btn.active.out { background: #d97706; border-color: #d97706; color: white; }
+  .role-btn.active.bench { background: #6b7280; border-color: #6b7280; color: white; }
+  .role-btn:active { transform: scale(0.92); }
+
+  /* 試合記録 */
+  .match-pill { background: #ede9fe; color: #5b21b6; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 14px; }
+  .top-row { display: flex; gap: 6px; margin-bottom: 0.4rem; align-items: center; }
+  .mini-score { flex: 1; display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: center; background: white; border-radius: 12px; padding: 4px 10px; border: 1px solid #e5e7eb; }
+  .mini-score-side { text-align: center; }
+  .mini-score-label { font-size: 9px; font-weight: 700; color: #6b7280; }
+  .mini-score-val { font-size: 16px; font-weight: 800; line-height: 1; }
+  .mini-score-val.us { color: #2563eb; }
+  .mini-score-val.them { color: #dc2626; }
+  .mini-score-vs { font-size: 11px; color: #9ca3af; font-weight: 700; }
+
+  .teams-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 0.5rem; }
+  .team-col { background: white; border-radius: 12px; padding: 0.4rem; border: 2px solid; min-height: 220px; }
+  .team-col.us { border-color: #93c5fd; }
+  .team-col.them { border-color: #fca5a5; }
+  .team-head { display: flex; justify-content: space-between; align-items: center; padding: 0 2px 4px; font-size: 12px; font-weight: 700; border-bottom: 1px dashed #e5e7eb; margin-bottom: 6px; }
+  .team-head.us { color: #1e40af; }
+  .team-head.them { color: #991b1b; }
+  .team-head .alive { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+  .team-head.us .alive { background: #dbeafe; color: #1e40af; }
+  .team-head.them .alive { background: #fee2e2; color: #991b1b; }
+
+  .zone-label { font-size: 9px; font-weight: 700; color: #9ca3af; letter-spacing: 0.5px; margin: 4px 0 3px; padding-left: 2px; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .player { border-radius: 9px; border: 2px solid; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; padding: 8px 2px 6px; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; position: relative; transition: transform 0.12s; }
+  .player:active { transform: scale(0.92); }
+  .player.in { border-color: #93c5fd; background: #eff6ff; }
+  .player.out { border-color: #fcd34d; background: #fffbeb; }
+  .player.eliminated { border-color: #d1d5db; background: #f9fafb; border-style: dashed; }
+  .player-name { font-size: 14px; font-weight: 800; line-height: 1.05; text-align: center; }
+  .player.in .player-name { color: #1e40af; }
+  .player.out .player-name { color: #92400e; }
+  .player.eliminated .player-name { color: #9ca3af; text-decoration: line-through; font-size: 12px; }
+  .player-name.parent::before { content: '👨'; font-size: 10px; margin-right: 1px; }
+  .player-hit { font-size: 9px; font-weight: 700; padding: 0 6px; border-radius: 8px; background: #fde68a; color: #92400e; line-height: 1.4; }
+  .zone-marker { position: absolute; top: 2px; right: 3px; font-size: 8px; font-weight: 700; padding: 0 5px; border-radius: 5px; line-height: 1.5; color: white; }
+  .zone-marker.out { background: #d97706; }
+  .zone-marker.elim { background: #6b7280; }
+  .empty-z { grid-column: 1 / -1; font-size: 9px; color: #d1d5db; text-align: center; padding: 6px; font-weight: 600; }
+
+  /* 相手チームカウンタ */
+  .their-counter { background: white; border-radius: 9px; padding: 0.6rem 0.3rem; margin-bottom: 6px; }
+  .their-row { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+  .their-zone-label { font-size: 9px; font-weight: 700; color: #991b1b; width: 28px; }
+  .their-big-num { font-size: 22px; font-weight: 800; color: #dc2626; flex: 1; text-align: center; line-height: 1; }
+  .their-btn { border: 2px solid #fca5a5; background: white; color: #991b1b; width: 28px; height: 28px; border-radius: 50%; font-size: 16px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0; }
+  .their-btn:active { transform: scale(0.92); }
+  .their-btn.minus { color: #991b1b; }
+  .their-btn.plus { background: #fca5a5; color: white; }
+
+  /* シート */
+  .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+  .backdrop.show { display: block; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; background: white; border-radius: 22px 22px 0 0; padding: 0.75rem 0.75rem 1.25rem; z-index: 101; transform: translateY(100%); transition: transform 0.25s ease; max-height: 80vh; overflow-y: auto; }
+  .sheet.show { transform: translateY(0); }
+  .sheet-grip { width: 36px; height: 4px; background: #d1d5db; border-radius: 2px; margin: 0 auto 10px; }
+  .sheet-title { font-size: 15px; font-weight: 700; text-align: center; margin-bottom: 4px; color: #1f2937; }
+  .sheet-out-name { color: #dc2626; font-size: 18px; }
+  .sheet-sub { font-size: 10px; text-align: center; color: #9ca3af; margin-bottom: 10px; }
+  .sheet-zone { font-size: 10px; font-weight: 700; color: #9ca3af; margin: 4px 0 4px; letter-spacing: 0.5px; }
+  .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+  .sheet-btn { border-radius: 12px; border: 2px solid; background: white; cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 12px 4px; position: relative; min-height: 52px; }
+  .sheet-btn.in { border-color: #93c5fd; background: #eff6ff; color: #1e40af; }
+  .sheet-btn.out { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+  .sheet-btn .sb-name { font-size: 14px; font-weight: 800; }
+  .sheet-btn .sb-tag { position: absolute; top: 2px; right: 4px; font-size: 8px; font-weight: 700; padding: 0 5px; border-radius: 5px; color: white; line-height: 1.5; }
+  .sheet-btn.out .sb-tag { background: #d97706; }
+  .sheet-btn:active { transform: scale(0.94); }
+  .sheet-skip { width: 100%; padding: 12px; border-radius: 50px; border: 1.5px solid #e5e7eb; background: white; color: #6b7280; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* 退場ゾーン選択シート */
+  .zone-pick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .zone-pick-btn { padding: 16px 8px; border-radius: 14px; border: 2.5px solid; background: white; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .zone-pick-btn.to-out { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+  .zone-pick-btn.to-elim { border-color: #d1d5db; background: #f9fafb; color: #6b7280; }
+  .zone-pick-btn:active { transform: scale(0.94); }
+
+  /* 休憩・交代 */
+  .sub-counter { text-align: center; font-size: 12px; color: #6b21a8; font-weight: 700; margin-bottom: 0.5rem; }
+  .sub-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 0.5rem; }
+  .sub-col { background: white; border-radius: 12px; padding: 0.5rem; border: 2px solid; }
+  .sub-col.playing { border-color: #93c5fd; }
+  .sub-col.bench { border-color: #d1d5db; }
+  .sub-col-title { font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+  .sub-col.playing .sub-col-title { color: #1e40af; }
+  .sub-col.bench .sub-col-title { color: #6b7280; }
+  .sub-list { display: flex; flex-direction: column; gap: 4px; }
+  .sub-item { padding: 8px; border-radius: 8px; border: 1.5px solid; cursor: pointer; font-size: 13px; font-weight: 700; text-align: center; -webkit-tap-highlight-color: transparent; }
+  .sub-col.playing .sub-item { border-color: #bfdbfe; background: #eff6ff; color: #1e40af; }
+  .sub-col.bench .sub-item { border-color: #e5e7eb; background: #f9fafb; color: #6b7280; }
+  .sub-item.selected { background: #fbbf24 !important; border-color: #f59e0b !important; color: #78350f !important; }
+  .sub-item:active { transform: scale(0.96); }
+  .sub-role-mini { font-size: 9px; font-weight: 700; padding: 0 5px; border-radius: 5px; margin-left: 4px; vertical-align: middle; }
+  .sub-role-mini.in { background: #fee2e2; color: #991b1b; }
+  .sub-role-mini.out { background: #fef3c7; color: #92400e; }
+
+  /* 結果 */
+  .result-card { background: white; border-radius: 16px; padding: 1rem; margin-bottom: 0.6rem; text-align: center; border: 2px solid; }
+  .result-card.win { border-color: #93c5fd; }
+  .result-card.lose { border-color: #fca5a5; }
+  .result-card.draw { border-color: #fcd34d; }
+  .result-emoji { font-size: 36px; }
+  .result-title { font-size: 20px; font-weight: 800; margin-top: 4px; }
+  .result-title.win { color: #1e40af; }
+  .result-title.lose { color: #991b1b; }
+  .result-title.draw { color: #92400e; }
+  .result-sub { font-size: 13px; color: #6b7280; margin-top: 4px; }
+  .halves-table { display: grid; grid-template-columns: auto 1fr auto auto; gap: 6px 10px; margin-top: 10px; font-size: 13px; }
+  .halves-table .hdr { font-size: 10px; color: #9ca3af; font-weight: 700; }
+  .halves-table .row-label { font-weight: 700; color: #6b21a8; }
+  .halves-table .num { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .save-status { text-align: center; font-size: 12px; font-weight: 600; margin-top: 8px; min-height: 18px; }
+  .save-status.ok { color: #16a34a; }
+  .save-status.err { color: #dc2626; }
+  .save-status.saving { color: #d97706; }
+
+  /* ボタン */
+  .btn-primary { width: 100%; padding: 14px; border-radius: 50px; border: none; cursor: pointer; font-size: 16px; font-weight: 700; background: linear-gradient(135deg,#7c3aed,#5b21b6); color: white; margin-bottom: 0.4rem; box-shadow: 0 4px 14px rgba(124,58,237,0.35); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-orange { width: 100%; padding: 14px; border-radius: 50px; border: none; cursor: pointer; font-size: 16px; font-weight: 700; background: linear-gradient(135deg,#f97316,#ef4444); color: white; margin-bottom: 0.4rem; box-shadow: 0 4px 14px rgba(249,115,22,0.35); }
+  .btn-orange:active { transform: scale(0.97); }
+  .btn-ghost { width: 100%; padding: 10px; border-radius: 50px; border: 2px solid #e5e7eb; background: white; color: #6b7280; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 0.4rem; }
+
+  .loading-msg { text-align: center; font-size: 14px; color: #7c3aed; font-weight: 600; padding: 2rem 0; }
+  .error-msg { text-align: center; color: #dc2626; font-size: 13px; padding: 0.75rem; background: #fef2f2; border-radius: 12px; border: 1px solid #fca5a5; }
+  .info-msg { background: #ede9fe; color: #5b21b6; font-size: 12px; padding: 8px 12px; border-radius: 10px; margin-bottom: 0.5rem; line-height: 1.5; }
+
+  .undo-toast { position: fixed; left: 50%; bottom: 70px; transform: translateX(-50%); background: #1f2937; color: white; padding: 8px 14px; border-radius: 24px; font-size: 12px; font-weight: 600; display: none; z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,0.25); max-width: 90vw; }
+  .undo-toast.show { display: flex; gap: 10px; align-items: center; }
+  .undo-toast button { background: #fbbf24; color: #78350f; border: none; padding: 3px 10px; border-radius: 18px; font-weight: 700; cursor: pointer; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="header-title">🏆 他校試合記録</h1>
+  <p id="header-sub">試合情報とメンバーを入力</p>
+</div>
+
+<div class="wrap">
+
+  <div class="steps" id="steps-area">
+    <div class="step active" id="step1"><div class="step-circle">1</div><span class="step-label">選択</span></div>
+    <div class="step-line" id="line1"></div>
+    <div class="step" id="step2"><div class="step-circle">2</div><span class="step-label">スタメン</span></div>
+    <div class="step-line" id="line2"></div>
+    <div class="step" id="step3"><div class="step-circle">3</div><span class="step-label">前半</span></div>
+    <div class="step-line" id="line3"></div>
+    <div class="step" id="step4"><div class="step-circle">4</div><span class="step-label">休憩</span></div>
+    <div class="step-line" id="line4"></div>
+    <div class="step" id="step5"><div class="step-circle">5</div><span class="step-label">後半</span></div>
+    <div class="step-line" id="line5"></div>
+    <div class="step" id="step6"><div class="step-circle">6</div><span class="step-label">結果</span></div>
+  </div>
+
+  <!-- ページ1: メンバー選択 -->
+  <div class="page active" id="page-select">
+    <div id="select-loading" class="loading-msg">名簿を読み込み中...</div>
+    <div id="select-content" style="display:none">
+      <div class="card">
+        <p class="field-label">🏫 対戦校名</p>
+        <input type="text" class="field-input" id="input-opponent" placeholder="例: ○○小学校">
+      </div>
+      <div class="card">
+        <p class="field-label">📅 試合日</p>
+        <input type="date" class="field-input" id="input-date">
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <p class="section-title">👦 出場メンバーを選ぶ</p>
+          <button class="btn-select-all" onclick="toggleSelectAll()">全員選択</button>
+        </div>
+        <div class="member-grid" id="member-grid"></div>
+      </div>
+      <div class="parent-card">
+        <p class="section-title" style="color:#059669;margin-bottom:6px">👨 参加する保護者</p>
+        <div class="member-grid" id="parent-grid"></div>
+      </div>
+      <p class="count-line" id="select-count">タップして選んでください</p>
+      <p class="info-msg">大会ルール: 1チーム8〜15名、男女混合、女子1名以上必須</p>
+      <button class="btn-primary" id="btn-to-starters" onclick="goToStarters()" disabled>スタメンを決める →</button>
+    </div>
+    <div id="select-error"></div>
+  </div>
+
+  <!-- ページ2: スタメン振り分け -->
+  <div class="page" id="page-starters">
+    <div class="role-summary">
+      <div class="role-sum-card in"><div class="role-sum-label">🟥 内野</div><div class="role-sum-val" id="sum-in">0</div><div class="role-sum-target">/ 5</div></div>
+      <div class="role-sum-card out"><div class="role-sum-label">🟨 外野</div><div class="role-sum-val" id="sum-out">0</div><div class="role-sum-target">/ 3</div></div>
+      <div class="role-sum-card bench"><div class="role-sum-label">⏸ 控え</div><div class="role-sum-val" id="sum-bench">0</div><div class="role-sum-target">残り</div></div>
+    </div>
+    <p class="info-msg">スタートメンバーは <b>内野5名・外野3名</b>。残りは控え。タップで切り替え。</p>
+    <div class="card" style="padding:0">
+      <div id="starter-list"></div>
+    </div>
+    <button class="btn-primary" id="btn-to-half1" onclick="goToHalf(1)" disabled>前半スタート →</button>
+    <button class="btn-ghost" onclick="showPage('select')">← メンバーを変更する</button>
+  </div>
+
+  <!-- ページ3/5: 試合（前半・後半 共通） -->
+  <div class="page" id="page-match">
+    <div class="top-row">
+      <span class="match-pill" id="match-pill">前半</span>
+      <div class="mini-score">
+        <div class="mini-score-side"><div class="mini-score-label">🔵 自</div><div class="mini-score-val us" id="us-best">8</div></div>
+        <div class="mini-score-vs">VS</div>
+        <div class="mini-score-side"><div class="mini-score-label">🔴 相</div><div class="mini-score-val them" id="them-best">8</div></div>
+      </div>
+    </div>
+
+    <div class="teams-row">
+      <div class="team-col us">
+        <div class="team-head us"><span>🔵 自チーム</span><span class="alive" id="alive-us">8</span></div>
+        <div class="zone-label">🟥 内野</div>
+        <div class="cards" id="cards-us-in"></div>
+        <div class="zone-label">🟨 外野</div>
+        <div class="cards" id="cards-us-out"></div>
+        <div class="zone-label">⛔ 退場</div>
+        <div class="cards" id="cards-us-elim"></div>
+      </div>
+      <div class="team-col them">
+        <div class="team-head them"><span>🔴 相手</span><span class="alive" id="alive-them">8</span></div>
+        <div class="their-counter">
+          <div class="zone-label" style="color:#991b1b">🟥 内野 残り</div>
+          <div class="their-row">
+            <button class="their-btn minus" onclick="adjustThem('in', -1)">−</button>
+            <div class="their-big-num" id="them-in">5</div>
+            <button class="their-btn plus" onclick="adjustThem('in', 1)">+</button>
+          </div>
+          <div class="zone-label" style="color:#991b1b">🟨 外野 残り</div>
+          <div class="their-row">
+            <button class="their-btn minus" onclick="adjustThem('out', -1)">−</button>
+            <div class="their-big-num" id="them-out">3</div>
+            <button class="their-btn plus" onclick="adjustThem('out', 1)">+</button>
+          </div>
+        </div>
+        <p style="font-size:9px;color:#9ca3af;text-align:center;padding:0 4px">相手退場時は<br>「−」 を押す</p>
+      </div>
+    </div>
+
+    <button class="btn-orange" id="btn-finish-half" onclick="finishHalf()">前半終了</button>
+    <button class="btn-ghost" onclick="confirmRestart()">← スタメン画面に戻る</button>
+  </div>
+
+  <!-- ページ4: 休憩 -->
+  <div class="page" id="page-halftime">
+    <div class="card" style="text-align:center;background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#fbbf24">
+      <p style="font-size:13px;color:#92400e;font-weight:700;margin-bottom:6px">⏸ 休憩 (1分)</p>
+      <p style="font-size:11px;color:#92400e">前半が終わりました</p>
+      <p style="font-size:20px;font-weight:800;color:#92400e;margin-top:8px" id="halftime-score">自 8 vs 相 8</p>
+    </div>
+
+    <p class="sub-counter" id="sub-counter">メンバーチェンジ: 残り1回</p>
+    <p class="info-msg">控えの選手と出場中の選手を1人ずつタップ → 「交代する」ボタンで入替（1回まで）</p>
+
+    <div class="sub-row">
+      <div class="sub-col playing">
+        <p class="sub-col-title">🔵 出場中</p>
+        <div class="sub-list" id="sub-playing"></div>
+      </div>
+      <div class="sub-col bench">
+        <p class="sub-col-title">⏸ 控え</p>
+        <div class="sub-list" id="sub-bench"></div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-do-sub" onclick="doSubstitution()" disabled>選手を交代する</button>
+    <button class="btn-orange" onclick="goToHalf(2)">後半スタート →</button>
+  </div>
+
+  <!-- ページ6: 結果 -->
+  <div class="page" id="page-result">
+    <div class="result-card" id="result-card">
+      <div class="result-emoji" id="result-emoji">🏆</div>
+      <p class="result-title" id="result-title">勝ち！</p>
+      <p class="result-sub" id="result-sub"></p>
+
+      <div class="halves-table">
+        <span></span><span class="hdr"></span><span class="hdr">前半</span><span class="hdr">後半</span>
+        <span class="row-label" style="text-align:left">🔵 自</span><span></span>
+        <span class="num" id="r-us-1">0</span><span class="num" id="r-us-2">0</span>
+        <span class="row-label" style="text-align:left">🔴 相</span><span></span>
+        <span class="num" id="r-them-1">0</span><span class="num" id="r-them-2">0</span>
+        <span class="row-label" style="text-align:left;color:#1f2937">合計</span><span></span>
+        <span class="num" id="r-us-total" style="color:#2563eb">0</span>
+        <span class="num" id="r-them-total" style="color:#dc2626">0</span>
+      </div>
+      <p class="save-status" id="save-status"></p>
+    </div>
+    <button class="btn-primary" onclick="resetAll()">新しい試合を記録</button>
+  </div>
+
+</div>
+
+<!-- シート: 退場ゾーン選択（内野→外野/退場、外野→退場） -->
+<div class="backdrop" id="zone-pick-backdrop" onclick="closeZonePick()"></div>
+<div class="sheet" id="zone-pick-sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-title">👈 <span class="sheet-out-name" id="zone-pick-name">？</span> の状態は？</div>
+  <div class="sheet-sub">タップして移動先を選んでください</div>
+  <div class="zone-pick-grid" id="zone-pick-options"></div>
+  <button class="sheet-skip" onclick="closeZonePick()">キャンセル</button>
+</div>
+
+<!-- シート: 相手退場時の「誰が当てた？」 -->
+<div class="backdrop" id="hit-backdrop" onclick="closeHitSheet(true)"></div>
+<div class="sheet" id="hit-sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-title">🎯 相手を退場させたのは？</div>
+  <div class="sheet-sub">自チームから選んでください</div>
+  <div class="sheet-zone">🟥 内野から</div>
+  <div class="sheet-grid" id="hit-grid-in"></div>
+  <div class="sheet-zone">🟨 外野から</div>
+  <div class="sheet-grid" id="hit-grid-out"></div>
+  <button class="sheet-skip" onclick="closeHitSheet(true)">わからない / スキップ</button>
+</div>
+
+<div class="undo-toast" id="undo-toast">
+  <span id="undo-msg"></span>
+  <button onclick="undoLast()">取消</button>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzssp0w4Mv1H1czUwXZwqphqWacL-SAk5YTdYw6oQYKWU5_SSlqh-Z6fQK-Zgvt_xoL/exec';
+
+// ====== 状態 ======
+let allMembers = [];
+let allParents = [];
+let selectedMembers = new Set();
+let selectedParents = new Set();
+let parentSet = new Set();           // 選択確定後の保護者セット
+let allSelected = false;
+
+let opponent = '';
+let matchDate = '';
+let participants = [];               // 参加者全員（フルネーム順）
+let roles = {};                      // name → 'in' | 'out' | 'bench'
+
+let halfNum = 1;                     // 現在記録中の半（1 or 2）
+let halfState = {};                  // 現在の半の状態
+let halfResults = [null, null];      // index 0:前半, 1:後半 の結果スナップショット
+
+let subRemaining = 1;
+let subSelectedPlaying = null;
+let subSelectedBench = null;
+let substitutions = [];
+
+let pendingOut = null;               // { name, type: 'zone-pick' | null }
+let pendingTheirZone = null;         // 相手退場時: 'in' or 'out'
+let lastAction = null;
+
+const el = id => document.getElementById(id);
+
+function firstName(n) {
+  if (!n) return '';
+  const p = String(n).split(/[ 　]+/).filter(Boolean);
+  return p.length > 1 ? p[p.length - 1] : n;
+}
+
+// ====== ページ切り替え ======
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el('page-' + name).classList.add('active');
+
+  const stepMap = { select:1, starters:2, match: (halfNum === 1 ? 3 : 5), halftime:4, result:6 };
+  const cur = stepMap[name] || 1;
+  for (let i = 1; i <= 6; i++) {
+    const s = el('step' + i);
+    s.classList.remove('active','done');
+    if (i < cur) s.classList.add('done');
+    else if (i === cur) s.classList.add('active');
+  }
+  for (let i = 1; i <= 5; i++) el('line' + i).classList.toggle('done', i < cur);
+
+  const headers = {
+    select:    ['🏆 他校試合記録','試合情報とメンバーを入力'],
+    starters:  ['🎽 スタメン振り分け','内野5名・外野3名を選ぼう'],
+    match:     [(halfNum === 1 ? '⚽ 前半' : '⚽ 後半') + ` vs ${opponent || '相手チーム'}`,'退場した子をタップ'],
+    halftime:  ['⏸ 休憩 (1分)','メンバーチェンジは1回まで'],
+    result:    ['🏁 試合終了','結果とスタッツを確認']
+  };
+  const h = headers[name] || headers.select;
+  el('header-title').textContent = h[0];
+  el('header-sub').textContent = h[1];
+
+  window.scrollTo(0, 0);
+}
+
+// ====== 名簿読込 ======
+async function loadAllMembers() {
+  try {
+    const [m, p] = await Promise.all([
+      fetch(GAS_URL + '?action=getAllMembers', { mode: 'cors' }),
+      fetch(GAS_URL + '?action=getParents', { mode: 'cors' })
+    ]);
+    const mData = await m.json();
+    const pData = await p.json();
+    allMembers = mData.members || [];
+    allParents = pData.parents || [];
+    if (allMembers.length === 0) {
+      el('select-loading').style.display = 'none';
+      el('select-error').innerHTML = '<p class="error-msg">名簿にメンバーがいません</p>';
+      return;
+    }
+    el('select-loading').style.display = 'none';
+    el('select-content').style.display = 'block';
+    renderMemberGrid();
+    renderParentGrid();
+    // 日付デフォルト
+    const today = new Date();
+    el('input-date').value = today.toISOString().slice(0, 10);
+  } catch(e) {
+    el('select-loading').style.display = 'none';
+    el('select-error').innerHTML = '<p class="error-msg">読み込みに失敗しました。再読み込みしてください。</p>';
+  }
+}
+
+function renderMemberGrid() {
+  const g = el('member-grid');
+  g.innerHTML = '';
+  allMembers.forEach((name, i) => {
+    const d = document.createElement('div');
+    d.className = 'member-item' + (selectedMembers.has(name) ? ' selected' : '');
+    d.textContent = firstName(name);
+    d.style.animationDelay = (i * 0.03) + 's';
+    d.onclick = () => {
+      selectedMembers.has(name) ? selectedMembers.delete(name) : selectedMembers.add(name);
+      d.classList.toggle('selected', selectedMembers.has(name));
+      updateSelectCount();
+    };
+    g.appendChild(d);
+  });
+  updateSelectCount();
+}
+
+function renderParentGrid() {
+  const g = el('parent-grid');
+  g.innerHTML = '';
+  allParents.forEach(p => {
+    const name = p.parentName;
+    const d = document.createElement('div');
+    d.className = 'parent-item' + (selectedParents.has(name) ? ' selected' : '');
+    d.textContent = firstName(name);
+    d.onclick = () => {
+      selectedParents.has(name) ? selectedParents.delete(name) : selectedParents.add(name);
+      d.classList.toggle('selected', selectedParents.has(name));
+      updateSelectCount();
+    };
+    g.appendChild(d);
+  });
+}
+
+function toggleSelectAll() {
+  allSelected = !allSelected;
+  allSelected ? allMembers.forEach(n => selectedMembers.add(n)) : selectedMembers.clear();
+  renderMemberGrid();
+  document.querySelector('.btn-select-all').textContent = allSelected ? '全員解除' : '全員選択';
+}
+
+function updateSelectCount() {
+  const total = selectedMembers.size + selectedParents.size;
+  let msg = total > 0 ? `${selectedMembers.size}人` : 'タップして選んでください';
+  if (selectedParents.size > 0) msg += ` + 保護者${selectedParents.size}人`;
+  if (total > 0 && total < 8) msg += ' （あと' + (8 - total) + '人）';
+  el('select-count').innerHTML = msg + (total >= 8 ? ' <span class="warn">✓ 8名以上</span>' : '');
+  el('btn-to-starters').disabled = total < 8;
+}
+
+// ====== スタメン振り分け ======
+function goToStarters() {
+  opponent = el('input-opponent').value.trim();
+  matchDate = el('input-date').value;
+  if (!opponent) { alert('対戦校名を入力してください'); return; }
+  if (!matchDate) { alert('試合日を選んでください'); return; }
+
+  parentSet = new Set(Array.from(selectedParents));
+  participants = [...Array.from(selectedMembers), ...Array.from(selectedParents)];
+  roles = {};
+  participants.forEach(n => roles[n] = 'bench');
+
+  renderStarterList();
+  updateRoleSummary();
+  showPage('starters');
+}
+
+function renderStarterList() {
+  const list = el('starter-list');
+  list.innerHTML = '';
+  participants.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'role-row';
+    const nm = document.createElement('div');
+    nm.className = 'role-name' + (parentSet.has(name) ? ' parent' : '');
+    nm.textContent = firstName(name);
+    const tg = document.createElement('div');
+    tg.className = 'role-toggle';
+    [['in','内野'],['out','外野'],['bench','控え']].forEach(([key, label]) => {
+      const b = document.createElement('button');
+      b.className = 'role-btn ' + key + (roles[name] === key ? ' active' : '');
+      b.textContent = label;
+      b.onclick = () => {
+        roles[name] = key;
+        renderStarterList();
+        updateRoleSummary();
+      };
+      tg.appendChild(b);
+    });
+    row.appendChild(nm);
+    row.appendChild(tg);
+    list.appendChild(row);
+  });
+}
+
+function updateRoleSummary() {
+  const cnt = { in: 0, out: 0, bench: 0 };
+  Object.values(roles).forEach(r => cnt[r]++);
+  el('sum-in').textContent = cnt.in;
+  el('sum-out').textContent = cnt.out;
+  el('sum-bench').textContent = cnt.bench;
+  el('btn-to-half1').disabled = !(cnt.in === 5 && cnt.out === 3);
+}
+
+// ====== 試合（半） ======
+function goToHalf(num) {
+  halfNum = num;
+  // halfState を初期化（各メンバーを roles の役割で配置、全員生存）
+  halfState = {
+    ourZones: {},        // name → 'in'|'out'|'eliminated'
+    theirIn: 5,
+    theirOut: 3,
+    hits: {}             // name → number
+  };
+  participants.forEach(name => {
+    halfState.ourZones[name] = (roles[name] === 'bench') ? null : roles[name];
+    halfState.hits[name] = 0;
+  });
+  pendingOut = null;
+  pendingTheirZone = null;
+  lastAction = null;
+  hideUndoToast();
+
+  el('match-pill').textContent = halfNum === 1 ? '前半' : '後半';
+  el('btn-finish-half').textContent = halfNum === 1 ? '前半終了 → 休憩' : '後半終了 → 結果へ';
+
+  renderMatch();
+  showPage('match');
+}
+
+function renderMatch() {
+  ['in','out','elim'].forEach(zone => {
+    const grid = el('cards-us-' + zone);
+    grid.innerHTML = '';
+    const internalZone = (zone === 'elim') ? 'eliminated' : zone;
+    const members = participants.filter(n => halfState.ourZones[n] === internalZone);
+    if (members.length === 0) {
+      grid.innerHTML = '<div class="empty-z">' + (zone === 'in' ? 'なし' : zone === 'out' ? 'なし' : '退場なし') + '</div>';
+    }
+    members.forEach(name => grid.appendChild(buildPlayerCard(name, internalZone)));
+  });
+
+  // 自チーム生存（内野＋外野）
+  const aliveUs = participants.filter(n => halfState.ourZones[n] === 'in' || halfState.ourZones[n] === 'out').length;
+  el('alive-us').textContent = aliveUs;
+  el('us-best').textContent = aliveUs;
+
+  // 相手
+  el('them-in').textContent = halfState.theirIn;
+  el('them-out').textContent = halfState.theirOut;
+  const aliveThem = halfState.theirIn + halfState.theirOut;
+  el('alive-them').textContent = aliveThem;
+  el('them-best').textContent = aliveThem;
+}
+
+function buildPlayerCard(name, zone) {
+  const d = document.createElement('div');
+  d.className = 'player ' + zone;
+  if (zone === 'out') {
+    const m = document.createElement('div');
+    m.className = 'zone-marker out';
+    m.textContent = '外';
+    d.appendChild(m);
+  } else if (zone === 'eliminated') {
+    const m = document.createElement('div');
+    m.className = 'zone-marker elim';
+    m.textContent = '退';
+    d.appendChild(m);
+  }
+  const nm = document.createElement('div');
+  nm.className = 'player-name' + (parentSet.has(name) ? ' parent' : '');
+  nm.textContent = firstName(name);
+  d.appendChild(nm);
+  if (halfState.hits[name]) {
+    const h = document.createElement('div');
+    h.className = 'player-hit';
+    h.textContent = '⚡' + halfState.hits[name];
+    d.appendChild(h);
+  }
+  d.onclick = () => tapOurPlayer(name);
+  return d;
+}
+
+// 自チーム選手タップ → 状態に応じた行動シート
+function tapOurPlayer(name) {
+  const cur = halfState.ourZones[name];
+  if (cur === 'eliminated') {
+    // 取消：退場 → 元の役割（内野or外野）に戻す。とりあえず外野へ復活させる
+    halfState.ourZones[name] = roles[name] === 'in' ? 'in' : 'out';
+    toast(firstName(name) + ' を復活');
+    lastAction = null;
+    renderMatch();
+    return;
+  }
+  pendingOut = { name, prevZone: cur };
+  openZonePick(name, cur);
+}
+
+function openZonePick(name, currentZone) {
+  el('zone-pick-name').textContent = firstName(name);
+  const opts = el('zone-pick-options');
+  opts.innerHTML = '';
+  if (currentZone === 'in') {
+    // 内野 → 外野 or 退場
+    const toOut = document.createElement('button');
+    toOut.className = 'zone-pick-btn to-out';
+    toOut.innerHTML = '🟨 外野へ移動<br><span style="font-size:10px;font-weight:600">（当てられた）</span>';
+    toOut.onclick = () => applyZone('out');
+    opts.appendChild(toOut);
+    const toElim = document.createElement('button');
+    toElim.className = 'zone-pick-btn to-elim';
+    toElim.innerHTML = '⛔ 退場<br><span style="font-size:10px;font-weight:600">（怪我等）</span>';
+    toElim.onclick = () => applyZone('eliminated');
+    opts.appendChild(toElim);
+  } else {
+    // 外野 → 退場
+    const toElim = document.createElement('button');
+    toElim.className = 'zone-pick-btn to-elim';
+    toElim.innerHTML = '⛔ 退場<br><span style="font-size:10px;font-weight:600">（外野でも当てられた）</span>';
+    toElim.onclick = () => applyZone('eliminated');
+    opts.appendChild(toElim);
+  }
+  el('zone-pick-backdrop').classList.add('show');
+  el('zone-pick-sheet').classList.add('show');
+}
+
+function closeZonePick() {
+  el('zone-pick-backdrop').classList.remove('show');
+  el('zone-pick-sheet').classList.remove('show');
+  pendingOut = null;
+}
+
+function applyZone(newZone) {
+  if (!pendingOut) return;
+  const { name, prevZone } = pendingOut;
+  halfState.ourZones[name] = newZone;
+  lastAction = { type: 'our-zone', name, prevZone };
+  toast(firstName(name) + ' を ' + (newZone === 'out' ? '外野へ' : '退場へ'));
+  closeZonePick();
+  renderMatch();
+}
+
+// 相手チームのカウント調整
+function adjustThem(zone, delta) {
+  const key = zone === 'in' ? 'theirIn' : 'theirOut';
+  const newVal = halfState[key] + delta;
+  if (newVal < 0) return;
+  if (delta < 0) {
+    // 相手退場 → 「誰が当てた？」シート
+    pendingTheirZone = zone;
+    halfState[key] = newVal;
+    renderMatch();
+    openHitSheet(zone);
+  } else {
+    // 復活（取消用途）
+    halfState[key] = newVal;
+    lastAction = { type: 'them-revive', zone };
+    toast('相手' + (zone === 'in' ? '内野' : '外野') + ' を1人復活');
+    renderMatch();
+  }
+}
+
+function openHitSheet(theirZoneLabel) {
+  el('hit-sheet').querySelector('.sheet-title').innerHTML = '🎯 相手' + (theirZoneLabel === 'in' ? '内野' : '外野') + ' を退場させたのは？';
+  const inList = participants.filter(n => halfState.ourZones[n] === 'in');
+  const outList = participants.filter(n => halfState.ourZones[n] === 'out');
+  const inG = el('hit-grid-in');
+  const outG = el('hit-grid-out');
+  inG.innerHTML = '';
+  outG.innerHTML = '';
+  if (inList.length === 0) inG.innerHTML = '<div class="empty-z">なし</div>';
+  if (outList.length === 0) outG.innerHTML = '<div class="empty-z">なし</div>';
+  inList.forEach(n => inG.appendChild(buildHitBtn(n, 'in')));
+  outList.forEach(n => outG.appendChild(buildHitBtn(n, 'out')));
+  el('hit-backdrop').classList.add('show');
+  el('hit-sheet').classList.add('show');
+}
+
+function buildHitBtn(name, zone) {
+  const b = document.createElement('button');
+  b.className = 'sheet-btn ' + zone;
+  if (zone === 'out') {
+    const t = document.createElement('span');
+    t.className = 'sb-tag';
+    t.textContent = '外';
+    b.appendChild(t);
+  }
+  const nm = document.createElement('div');
+  nm.className = 'sb-name';
+  nm.textContent = firstName(name);
+  b.appendChild(nm);
+  b.onclick = () => recordThemHit(name);
+  return b;
+}
+
+function closeHitSheet(skipped) {
+  el('hit-backdrop').classList.remove('show');
+  el('hit-sheet').classList.remove('show');
+  if (skipped && pendingTheirZone) {
+    lastAction = { type: 'them-hit', zone: pendingTheirZone, thrower: null };
+    toast('相手' + (pendingTheirZone === 'in' ? '内野' : '外野') + ' を1人退場');
+  }
+  pendingTheirZone = null;
+}
+
+function recordThemHit(thrower) {
+  halfState.hits[thrower] = (halfState.hits[thrower] || 0) + 1;
+  lastAction = { type: 'them-hit', zone: pendingTheirZone, thrower };
+  toast(firstName(thrower) + ' → 相手を退場');
+  closeHitSheet(false);
+  renderMatch();
+}
+
+// Undo
+function undoLast() {
+  if (!lastAction) { hideUndoToast(); return; }
+  const a = lastAction;
+  if (a.type === 'our-zone') {
+    halfState.ourZones[a.name] = a.prevZone;
+  } else if (a.type === 'them-hit') {
+    const key = a.zone === 'in' ? 'theirIn' : 'theirOut';
+    halfState[key]++;
+    if (a.thrower) halfState.hits[a.thrower] = Math.max(0, (halfState.hits[a.thrower] || 0) - 1);
+  } else if (a.type === 'them-revive') {
+    const key = a.zone === 'in' ? 'theirIn' : 'theirOut';
+    halfState[key]--;
+  }
+  lastAction = null;
+  hideUndoToast();
+  renderMatch();
+}
+
+function toast(msg) {
+  el('undo-msg').textContent = msg;
+  el('undo-toast').classList.add('show');
+  clearTimeout(window._t);
+  window._t = setTimeout(hideUndoToast, 3500);
+}
+function hideUndoToast() { el('undo-toast').classList.remove('show'); }
+
+// 半終了
+function finishHalf() {
+  const ourBest = participants.filter(n => halfState.ourZones[n] === 'in' || halfState.ourZones[n] === 'out').length;
+  const theirBest = halfState.theirIn + halfState.theirOut;
+  halfResults[halfNum - 1] = {
+    num: halfNum,
+    ourBest,
+    theirBest,
+    hits: { ...halfState.hits },
+    ourZones: { ...halfState.ourZones }
+  };
+  if (halfNum === 1) {
+    el('halftime-score').textContent = `自 ${ourBest} vs 相 ${theirBest}`;
+    renderSubstitution();
+    showPage('halftime');
+  } else {
+    showResult();
+  }
+}
+
+// ====== 休憩・メンバーチェンジ ======
+function renderSubstitution() {
+  subSelectedPlaying = null;
+  subSelectedBench = null;
+  const playing = participants.filter(n => roles[n] === 'in' || roles[n] === 'out');
+  const bench = participants.filter(n => roles[n] === 'bench');
+  const pL = el('sub-playing');
+  const bL = el('sub-bench');
+  pL.innerHTML = '';
+  bL.innerHTML = '';
+  playing.forEach(name => {
+    const i = document.createElement('div');
+    i.className = 'sub-item';
+    const tag = roles[name] === 'in' ? '<span class="sub-role-mini in">内</span>' : '<span class="sub-role-mini out">外</span>';
+    i.innerHTML = firstName(name) + ' ' + tag;
+    i.onclick = () => {
+      if (subRemaining <= 0) return;
+      subSelectedPlaying = subSelectedPlaying === name ? null : name;
+      renderSubSelection();
+    };
+    i.dataset.name = name;
+    pL.appendChild(i);
+  });
+  bench.forEach(name => {
+    const i = document.createElement('div');
+    i.className = 'sub-item';
+    i.innerHTML = firstName(name) + ' <span class="sub-role-mini" style="background:#e5e7eb;color:#6b7280">控</span>';
+    i.onclick = () => {
+      if (subRemaining <= 0) return;
+      subSelectedBench = subSelectedBench === name ? null : name;
+      renderSubSelection();
+    };
+    i.dataset.name = name;
+    bL.appendChild(i);
+  });
+  renderSubSelection();
+  updateSubCounter();
+}
+
+function renderSubSelection() {
+  document.querySelectorAll('#sub-playing .sub-item').forEach(it => {
+    it.classList.toggle('selected', it.dataset.name === subSelectedPlaying);
+  });
+  document.querySelectorAll('#sub-bench .sub-item').forEach(it => {
+    it.classList.toggle('selected', it.dataset.name === subSelectedBench);
+  });
+  el('btn-do-sub').disabled = !(subSelectedPlaying && subSelectedBench && subRemaining > 0);
+}
+
+function updateSubCounter() {
+  el('sub-counter').textContent = subRemaining > 0 ? `メンバーチェンジ: 残り${subRemaining}回` : 'メンバーチェンジ: 使用済み';
+}
+
+function doSubstitution() {
+  if (!subSelectedPlaying || !subSelectedBench || subRemaining <= 0) return;
+  // 出場中の役割を控えに、控えを元の役割に
+  const outgoingRole = roles[subSelectedPlaying];
+  roles[subSelectedPlaying] = 'bench';
+  roles[subSelectedBench] = outgoingRole;
+  substitutions.push({ in: subSelectedBench, out: subSelectedPlaying, role: outgoingRole });
+  subRemaining--;
+  subSelectedPlaying = null;
+  subSelectedBench = null;
+  toast('交代しました');
+  renderSubstitution();
+}
+
+// ====== 結果 ======
+function showResult() {
+  const r1 = halfResults[0], r2 = halfResults[1];
+  const usTotal = r1.ourBest + r2.ourBest;
+  const themTotal = r1.theirBest + r2.theirBest;
+  let winner, emoji, title, cls;
+  if (usTotal > themTotal) { winner = 'us'; emoji = '🏆'; title = '勝ち！'; cls = 'win'; }
+  else if (usTotal < themTotal) { winner = 'them'; emoji = '😢'; title = '負け'; cls = 'lose'; }
+  else { winner = 'draw'; emoji = '🤝'; title = '引き分け'; cls = 'draw'; }
+
+  const card = el('result-card');
+  card.className = 'result-card ' + cls;
+  el('result-emoji').textContent = emoji;
+  const t = el('result-title');
+  t.textContent = title;
+  t.className = 'result-title ' + cls;
+  el('result-sub').textContent = `vs ${opponent}（${matchDate}）`;
+  el('r-us-1').textContent = r1.ourBest;
+  el('r-us-2').textContent = r2.ourBest;
+  el('r-them-1').textContent = r1.theirBest;
+  el('r-them-2').textContent = r2.theirBest;
+  el('r-us-total').textContent = usTotal;
+  el('r-them-total').textContent = themTotal;
+  el('save-status').textContent = '';
+
+  showPage('result');
+  saveMatch(winner, usTotal, themTotal);
+}
+
+async function saveMatch(winner, usTotal, themTotal) {
+  el('save-status').textContent = '保存中...';
+  el('save-status').className = 'save-status saving';
+  const payload = {
+    type: 'external',
+    opponent,
+    date: matchDate,
+    teamMembers: Array.from(selectedMembers),
+    parents: Array.from(selectedParents),
+    starters: {
+      in: participants.filter(n => roles[n] === 'in' || (substitutions.some(s => s.out === n && s.role === 'in'))),
+      out: participants.filter(n => roles[n] === 'out' || (substitutions.some(s => s.out === n && s.role === 'out')))
+    },
+    halves: halfResults.map(r => ({
+      num: r.num,
+      ourBest: r.ourBest,
+      theirBest: r.theirBest,
+      hits: r.hits
+    })),
+    totalOurBest: usTotal,
+    totalTheirBest: themTotal,
+    winner,
+    substitutions
+  };
+  console.log('[saveExternalMatch] payload:', payload);
+  try {
+    const url = GAS_URL + '?action=saveExternalMatch&data=' + encodeURIComponent(JSON.stringify(payload));
+    const res = await fetch(url, { mode: 'cors' });
+    el('save-status').textContent = '✓ 保存しました';
+    el('save-status').className = 'save-status ok';
+  } catch(e) {
+    el('save-status').textContent = '保存に失敗しました（GAS未対応の可能性）';
+    el('save-status').className = 'save-status err';
+  }
+}
+
+function confirmRestart() {
+  if (confirm('スタメン画面に戻りますか？\n（現在の半の記録は失われます）')) {
+    goToHalf(halfNum);
+    showPage('starters');
+  }
+}
+
+function resetAll() {
+  selectedMembers = new Set();
+  selectedParents = new Set();
+  parentSet = new Set();
+  allSelected = false;
+  opponent = '';
+  matchDate = '';
+  participants = [];
+  roles = {};
+  halfNum = 1;
+  halfState = {};
+  halfResults = [null, null];
+  subRemaining = 1;
+  subSelectedPlaying = null;
+  subSelectedBench = null;
+  substitutions = [];
+  pendingOut = null;
+  pendingTheirZone = null;
+  lastAction = null;
+  document.querySelector('.btn-select-all').textContent = '全員選択';
+  el('input-opponent').value = '';
+  renderMemberGrid();
+  renderParentGrid();
+  updateSelectCount();
+  showPage('select');
+}
+
+loadAllMembers();
+</script>
+</body>
+</html>

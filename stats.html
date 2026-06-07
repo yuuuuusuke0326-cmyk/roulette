@@ -159,6 +159,13 @@
   <div class="main-tab" onclick="switchMainTab('compat')">🤝 相性分析</div>
 </div>
 
+<div style="background:white;padding:8px 12px;border-bottom:0.5px solid #e5e7eb;display:flex;gap:6px;align-items:center;">
+  <span style="font-size:11px;color:#6b7280;font-weight:700;">対象:</span>
+  <button class="filter-btn active" data-type="all" onclick="setTypeFilter('all', this)">すべて</button>
+  <button class="filter-btn" data-type="practice" onclick="setTypeFilter('practice', this)">練習のみ</button>
+  <button class="filter-btn" data-type="external" onclick="setTypeFilter('external', this)">他校試合のみ</button>
+</div>
+
 <div class="wrap">
 
   <!-- 子ども個人成績ページ -->
@@ -283,16 +290,34 @@ let sortKey = 'win';
 let parentSortKey = 'win';
 let filterKey = 'all';
 let compatTarget = 'child'; // 'child' or 'parent'
+let typeFilter = 'all'; // 'all' | 'practice' | 'external'
+
+function setTypeFilter(t, btn) {
+  if (typeFilter === t) return;
+  typeFilter = t;
+  document.querySelectorAll('.main-tab-row + div .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.type === t));
+  // ローディング表示に戻す
+  ['personal','parent','compat'].forEach(p => {
+    el(p + '-loading') && (el(p + '-loading').style.display = 'block');
+    el(p + '-content') && (el(p + '-content').style.display = 'none');
+    el(p + '-error') && (el(p + '-error').innerHTML = '');
+  });
+  loadAll();
+}
+
+function withTypeParam(action) {
+  return GAS_URL + '?action=' + action + (typeFilter !== 'all' ? '&type=' + typeFilter : '');
+}
 
 function el(id) { return document.getElementById(id); }
 
 async function loadAll() {
   try {
     const [statsRes, detailRes, parentStatsRes, parentDetailRes] = await Promise.all([
-      fetch(GAS_URL + '?action=getPersonalStats', { mode: 'cors' }),
-      fetch(GAS_URL + '?action=getMatchDetail', { mode: 'cors' }),
-      fetch(GAS_URL + '?action=getParentStats', { mode: 'cors' }),
-      fetch(GAS_URL + '?action=getParentDetail', { mode: 'cors' })
+      fetch(withTypeParam('getPersonalStats'), { mode: 'cors' }),
+      fetch(withTypeParam('getMatchDetail'), { mode: 'cors' }),
+      fetch(withTypeParam('getParentStats'), { mode: 'cors' }),
+      fetch(withTypeParam('getParentDetail'), { mode: 'cors' })
     ]);
     const statsData = await statsRes.json();
     const detailData = await detailRes.json();
