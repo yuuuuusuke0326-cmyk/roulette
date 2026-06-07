@@ -384,6 +384,16 @@
   <button class="sheet-skip" onclick="closeZonePick()">キャンセル</button>
 </div>
 
+<!-- シート: 内野→外野時の「誰を内野に上げる？」 -->
+<div class="backdrop" id="promote-backdrop" onclick="closePromoteSheet()"></div>
+<div class="sheet" id="promote-sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-title" id="promote-title">👉 内野に上がる外野は？</div>
+  <div class="sheet-sub">外野から1人タップして内野に上げます</div>
+  <div class="sheet-grid" id="promote-grid"></div>
+  <button class="sheet-skip" onclick="closePromoteSheet()">誰も上げない</button>
+</div>
+
 <!-- シート: 相手退場時の「誰が当てた？」 -->
 <div class="backdrop" id="hit-backdrop" onclick="closeHitSheet(true)"></div>
 <div class="sheet" id="hit-sheet">
@@ -734,10 +744,70 @@ function applyZone(newZone) {
   if (!pendingOut) return;
   const { name, prevZone } = pendingOut;
   halfState.ourZones[name] = newZone;
+
+  // 内野→外野: 外野メンバーがいれば「内野に上げる人」シートを開く
+  if (prevZone === 'in' && newZone === 'out') {
+    const outfielders = participants.filter(n => halfState.ourZones[n] === 'out' && n !== name);
+    // zone-pickシートは閉じるが pendingOut は保持して promote 側で使う
+    el('zone-pick-backdrop').classList.remove('show');
+    el('zone-pick-sheet').classList.remove('show');
+    renderMatch();
+    if (outfielders.length > 0) {
+      openPromoteSheet(name, outfielders);
+      return;
+    }
+    // 外野が他にいない → 単純な内→外移動として確定
+    lastAction = { type: 'our-zone', name, prevZone };
+    toast(firstName(name) + ' を外野へ');
+    pendingOut = null;
+    return;
+  }
+
+  // 内→退場 / 外→退場
   lastAction = { type: 'our-zone', name, prevZone };
   toast(firstName(name) + ' を ' + (newZone === 'out' ? '外野へ' : '退場へ'));
   closeZonePick();
   renderMatch();
+}
+
+function openPromoteSheet(demotedName, outfielders) {
+  el('promote-title').innerHTML = `👉 <span style="color:#dc2626">${firstName(demotedName)}</span> の代わりに内野へ上がるのは？`;
+  const grid = el('promote-grid');
+  grid.innerHTML = '';
+  outfielders.forEach(name => {
+    const b = document.createElement('button');
+    b.className = 'sheet-btn in';
+    const nm = document.createElement('div');
+    nm.className = 'sb-name';
+    nm.textContent = firstName(name);
+    b.appendChild(nm);
+    b.onclick = () => applyPromote(demotedName, name);
+    grid.appendChild(b);
+  });
+  el('promote-backdrop').classList.add('show');
+  el('promote-sheet').classList.add('show');
+}
+
+function applyPromote(demotedName, promotedName) {
+  halfState.ourZones[promotedName] = 'in';
+  lastAction = { type: 'swap', demoted: demotedName, promoted: promotedName };
+  toast(firstName(demotedName) + ' → 外野 / ' + firstName(promotedName) + ' → 内野');
+  el('promote-backdrop').classList.remove('show');
+  el('promote-sheet').classList.remove('show');
+  pendingOut = null;
+  renderMatch();
+}
+
+function closePromoteSheet() {
+  el('promote-backdrop').classList.remove('show');
+  el('promote-sheet').classList.remove('show');
+  if (pendingOut) {
+    // 昇格なしで確定
+    lastAction = { type: 'our-zone', name: pendingOut.name, prevZone: pendingOut.prevZone };
+    toast(firstName(pendingOut.name) + ' を外野へ（内野上げなし）');
+    pendingOut = null;
+    renderMatch();
+  }
 }
 
 // 相手チームのカウント調整
@@ -817,6 +887,10 @@ function undoLast() {
   const a = lastAction;
   if (a.type === 'our-zone') {
     halfState.ourZones[a.name] = a.prevZone;
+  } else if (a.type === 'swap') {
+    // demoted を内野に戻し、promoted を外野に戻す
+    halfState.ourZones[a.demoted] = 'in';
+    halfState.ourZones[a.promoted] = 'out';
   } else if (a.type === 'them-hit') {
     const key = a.zone === 'in' ? 'theirIn' : 'theirOut';
     halfState[key]++;
