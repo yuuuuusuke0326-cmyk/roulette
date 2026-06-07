@@ -357,6 +357,8 @@ function buildPairStats(records, target) {
   const stats = {};
   const matchMap = {};
   records.forEach(r => {
+    // 他校試合(team='us')は対戦相手が個別記録されないので相性分析対象外
+    if (r.team !== 'A' && r.team !== 'B') return;
     const key = r.date + '-' + r.matchNum;
     if (!matchMap[key]) matchMap[key] = { A: [], B: [] };
     matchMap[key][r.team].push({ name: r.name, result: r.result });
