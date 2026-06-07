@@ -620,7 +620,8 @@ function goToHalf(num) {
     ourZones: {},        // name → 'in'|'out'|'eliminated'
     theirIn: 5,
     theirOut: 3,
-    hits: {}             // name → number
+    hits: {},            // name → number
+    hitInThisHalf: new Set()  // 内野で当てられて外野に出た選手（再昇格不可）
   };
   participants.forEach(name => {
     halfState.ourZones[name] = (roles[name] === 'bench') ? null : roles[name];
@@ -745,18 +746,22 @@ function applyZone(newZone) {
   const { name, prevZone } = pendingOut;
   halfState.ourZones[name] = newZone;
 
-  // 内野→外野: 外野メンバーがいれば「内野に上げる人」シートを開く
+  // 内野→外野: この選手は「当てられて」外野へ。以後内野には戻れない
   if (prevZone === 'in' && newZone === 'out') {
-    const outfielders = participants.filter(n => halfState.ourZones[n] === 'out' && n !== name);
+    halfState.hitInThisHalf.add(name);
+    // 内野に上がれる外野メンバー（=元外野からまだ当てられていない人）
+    const eligible = participants.filter(n =>
+      halfState.ourZones[n] === 'out' && n !== name && !halfState.hitInThisHalf.has(n)
+    );
     // zone-pickシートは閉じるが pendingOut は保持して promote 側で使う
     el('zone-pick-backdrop').classList.remove('show');
     el('zone-pick-sheet').classList.remove('show');
     renderMatch();
-    if (outfielders.length > 0) {
-      openPromoteSheet(name, outfielders);
+    if (eligible.length > 0) {
+      openPromoteSheet(name, eligible);
       return;
     }
-    // 外野が他にいない → 単純な内→外移動として確定
+    // 内野に上がれる外野がいない → 単純な内→外移動として確定
     lastAction = { type: 'our-zone', name, prevZone };
     toast(firstName(name) + ' を外野へ');
     pendingOut = null;
@@ -887,10 +892,13 @@ function undoLast() {
   const a = lastAction;
   if (a.type === 'our-zone') {
     halfState.ourZones[a.name] = a.prevZone;
+    // 内→外で記録されたヒット履歴を取消
+    if (a.prevZone === 'in') halfState.hitInThisHalf?.delete(a.name);
   } else if (a.type === 'swap') {
     // demoted を内野に戻し、promoted を外野に戻す
     halfState.ourZones[a.demoted] = 'in';
     halfState.ourZones[a.promoted] = 'out';
+    halfState.hitInThisHalf?.delete(a.demoted);
   } else if (a.type === 'them-hit') {
     const key = a.zone === 'in' ? 'theirIn' : 'theirOut';
     halfState[key]++;
