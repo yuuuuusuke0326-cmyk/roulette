@@ -1,150 +1,111 @@
-# GAS（Google Apps Script）追加コード
+# GAS 完全版 移行手順
 
-`external-match.html` と `stats.html` の他校試合機能を有効化するために、Apps Script エディタに以下を追記してください。
+実物のGASソースをベースに、**他校試合機能の追加** と **練習/試合の種別フィルタ対応** を組み込んだ完全版を [`gas-complete.js`](./gas-complete.js) に置きました。
 
-> **注意**: 既存の `doGet(e)` / `saveMatch` などのコードは触らず、**追加・修正** していきます。
-
----
-
-## 1. `doGet` のディスパッチに新アクションを追加
-
-既存の `doGet(e)` 関数の `switch` / `if` 分岐に以下を追加：
-
-```js
-function doGet(e) {
-  const action = e.parameter.action;
-  const type = e.parameter.type;  // ← 追加：'all' | 'practice' | 'external'
-
-  // ... 既存の case ...
-
-  if (action === 'saveExternalMatch') {
-    return saveExternalMatch(JSON.parse(e.parameter.data));
-  }
-
-  // 既存の取得系も type パラメータを渡す
-  if (action === 'getPersonalStats') return getPersonalStats(type);
-  if (action === 'getMatchDetail')   return getMatchDetail(type);
-  if (action === 'getParentStats')   return getParentStats(type);
-  if (action === 'getParentDetail')  return getParentDetail(type);
-
-  // ... 既存の他のハンドラ ...
-}
-```
+そのまま Apps Script エディタに貼り付けて使えます。以下は移行作業の手順とスキーマ変更点です。
 
 ---
 
-## 2. `saveExternalMatch` 関数を追加
+## 1. ファイル差し替え手順
 
-```js
-function saveExternalMatch(data) {
-  // matches シートを開く（既存 saveMatch と同じシート想定）
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('matches');
+1. Apps Script エディタで **元のファイル（`コード.gs` 等）を全選択 → 削除**
+2. [`gas-complete.js`](./gas-complete.js) の中身を全部コピーして貼り付け
+3. `Ctrl+S` で保存
+4. **「デプロイ」 → 「デプロイを管理」**
+5. 既存デプロイの鉛筆アイコン → **「バージョン: 新しいバージョン」** → 「デプロイ」
+6. デプロイURLは変わらないので、フロント側の `GAS_URL` は触らなくてOK
 
-  // 1行 = 1試合の記録。シート列の構成は既存 saveMatch と合わせる + type 列を持つ前提。
-  // 既存シートに type 列がなければ末尾に追加してください。
-  // 例: type | date | opponent | teamA(or members) | teamB | winner | halves(JSON) | hits(JSON) | parents | substitutions
-
-  sheet.appendRow([
-    'external',                                  // type
-    data.date,                                   // 試合日
-    data.opponent,                               // 対戦校
-    JSON.stringify(data.teamMembers),            // 自チームメンバー
-    '',                                          // 相手チーム（不要なので空）
-    data.winner,                                 // 'us' | 'them' | 'draw'
-    JSON.stringify(data.halves),                 // 前半・後半の詳細
-    JSON.stringify(mergedHits(data.halves)),     // 全半合計のヒット数
-    JSON.stringify(data.parents),                // 保護者
-    JSON.stringify(data.substitutions || []),    // 交代記録
-    data.totalOurBest,                           // 自チーム合計ベスト
-    data.totalTheirBest                          // 相手合計ベスト
-  ]);
-
-  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function mergedHits(halves) {
-  const out = {};
-  halves.forEach(h => {
-    Object.keys(h.hits || {}).forEach(name => {
-      out[name] = (out[name] || 0) + h.hits[name];
-    });
-  });
-  return out;
-}
-```
+> 既存の `GROUP_ID` / `CHANNEL_ACCESS_TOKEN` / `SS_ID` といったグローバル定数は GAS の「プロジェクトのプロパティ」やコード冒頭にあるはずなので、それは残してください。
 
 ---
 
-## 3. 既存 `saveMatch` に `type='practice'` を保存
+## 2. スキーマ変更点（既存シートに列を追加）
 
-`stats.html` のフィルタを正しく効かせるため、既存の練習試合保存にも種別を入れます。
+新機能のため、既存シートに **末尾列を1〜3列追加** します。**既存データは壊しません**（読み取り時に空セルは `'practice'` として扱う）。
 
-```js
-function saveMatch(data) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('matches');
+### 退場記録（H列を追加）
 
-  sheet.appendRow([
-    'practice',                  // ← 追加: type
-    new Date(),                  // date
-    '',                          // opponent（練習なので空）
-    JSON.stringify(data.teamA),
-    JSON.stringify(data.teamB),
-    data.winner,
-    // ... 以降は既存と同じ形でOK
-  ]);
+| A | B | C | D | E | F | G | **H** |
+|---|---|---|---|---|---|---|---|
+| 日付 | 試合No | 名前 | チーム | 被ヒット | 勝敗 | 与ヒット数 | **種別** |
 
-  // ...
-}
-```
+H列に、既存データは何も入れなくてOK（コードが `'practice'` 扱いする）。**新規練習試合の保存時に `'practice'`、他校試合保存時に `'external'`** が自動で入ります。
 
-> シートのカラム順は既存環境に合わせて並べ替えてください。**重要なのは1列目に `type` を入れること**（または末尾でも可）。フィルタはこの列で分岐します。
+### 保護者退場記録（H列を追加）
 
----
+同じく `種別` 列を追加。
 
-## 4. 取得系（`getPersonalStats` 等）に type フィルタを追加
+### 試合履歴（H〜J列を追加）
 
-```js
-function getPersonalStats(type) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('matches');
-  const rows = sheet.getDataRange().getValues();
-  // ヘッダー行をスキップ
-  const data = rows.slice(1);
+| A | B | C | D | E | F | G | **H** | **I** | **J** |
+|---|---|---|---|---|---|---|---|---|---|
+| 日付 | 試合No | チームA | チームB | 退場A | 退場B | 勝者 | **種別** | **対戦相手** | **詳細(JSON)** |
 
-  // type フィルタ
-  const filtered = data.filter(row => {
-    const rowType = row[0] || 'practice'; // 既存データは practice 扱い
-    if (!type || type === 'all') return true;
-    return rowType === type;
-  });
+H列＝種別、I列＝対戦相手（他校試合のみ）、J列＝詳細情報JSON（前後半のベスト数等）。
 
-  // 以降は既存集計ロジックをそのまま使う（filtered を入力に）
-  // 例: 子どもごとの win/lose/draw/survive/total を集計
-  // ...
-
-  return ContentService.createTextOutput(JSON.stringify({ stats: result }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-```
-
-同じパターンで `getMatchDetail` / `getParentStats` / `getParentDetail` も `type` 引数を受け取り、`filtered` だけ集計するよう変更してください。
+> 既存行のH〜J列は空のままでOK。新規保存時に自動で埋まります。
 
 ---
 
-## 5. デプロイ
+## 3. 新しいAPI仕様
 
-修正後：
+### 新規
 
-1. Apps Script エディタ右上の **「デプロイ」 → 「デプロイを管理」**
-2. 既存デプロイの右にある鉛筆アイコンで **「新しいバージョン」** を選んで更新
-3. デプロイURLは変わらないので、フロントの `GAS_URL` 定数は触らなくてOK
+| アクション | 内容 |
+|---|---|
+| `?action=saveExternalMatch&data=<JSON>` | 他校試合を保存。`external-match.html` から呼ばれる |
+
+### 既存 + フィルタ追加
+
+| アクション | 追加パラメータ |
+|---|---|
+| `?action=getPersonalStats&type=practice` | 練習試合のみで集計 |
+| `?action=getPersonalStats&type=external` | 他校試合のみで集計 |
+| `?action=getPersonalStats`（または `&type=all`） | 全件で集計 |
+| `?action=getMatchDetail&type=...` | 同上 |
+| `?action=getParentStats&type=...` | 同上 |
+| `?action=getParentDetail&type=...` | 同上 |
+
+`stats.html` の上部フィルタが自動的にこの `&type=` を付けて呼びます。
+
+### 既存 (変更なし)
+
+- `getAllMembers`, `getMembers`, `getParents`, `saveMatch`
 
 ---
 
-## 6. 確認
+## 4. 動作確認
 
-- `external-match.html` で1試合記録 → スプレッドシートに `type=external` の行が追加されているか
-- 既存 `dodgeball.html` で1試合記録 → `type=practice` の行が追加されているか
-- `stats.html` で「すべて／練習のみ／他校試合のみ」フィルタを切替 → 数値が変わるか
+### A) 練習試合の保存
 
-問題が出たら、ブラウザの開発者ツール（Network タブ）で実際のレスポンスを見てください。
+1. `dodgeball.html` で1試合記録 → 保存
+2. スプレッドシートの **退場記録 H列に `practice`** が入っているか確認
+
+### B) 他校試合の保存
+
+1. Apps Script エディタで `testSaveExternalMatch` を実行（テスト用関数を入れてあります）
+2. スプレッドシートを確認：
+   - **試合履歴** に1行（H列=`external`、I列=対戦相手、J列=JSON詳細）
+   - **退場記録** に8行（H列=`external`、D列=`us`）
+
+エラーが出る場合は実行ログをチェック。
+
+### C) フィルタ動作確認
+
+1. `stats.html` を開く
+2. 上部の「すべて／練習のみ／他校試合のみ」を切替
+3. 各タブで数値が変わるか確認
+
+---
+
+## 5. ロールバック
+
+万一問題が出たら、Apps Script の **「ファイル」→「履歴を表示」** で1つ前のバージョンに戻せます。スプレッドシート側は列を追加しただけなので破壊的変更はありません。
+
+---
+
+## 6. 既知の制約
+
+- **他校試合の生存率は1試合単位**（後半終了時に退場していなければ生存扱い）。前後半それぞれで集計はしていません
+- **相手の個人成績は記録しません**（塊で扱う設計のため）
+- **試合No列**：他校試合は `vs ○○小学校` の形で入ります。既存の数値とは異なる文字列です
