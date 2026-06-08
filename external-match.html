@@ -326,8 +326,8 @@
       <p style="font-size:20px;font-weight:800;color:#92400e;margin-top:8px" id="halftime-score">自 8 vs 相 8</p>
     </div>
 
-    <p class="sub-counter" id="sub-counter">メンバーチェンジ: 残り1回</p>
-    <p class="info-msg">控えの選手と出場中の選手を1人ずつタップ → 「交代する」ボタンで入替（1回まで）</p>
+    <p class="sub-counter" id="sub-counter">メンバーチェンジ（人数・回数とも無制限）</p>
+    <p class="info-msg">出場中と控えを1人ずつ選んで「交代する」を押すと入れ替え。何回でもOK。</p>
 
     <div class="sub-row">
       <div class="sub-col playing">
@@ -426,7 +426,7 @@ let halfNum = 1;                     // 現在記録中の半（1 or 2）
 let halfState = {};                  // 現在の半の状態
 let halfResults = [null, null];      // index 0:前半, 1:後半 の結果スナップショット
 
-let subRemaining = 1;
+let subCount = 0;                    // 累積メンバーチェンジ回数（上限なし）
 let subSelectedPlaying = null;
 let subSelectedBench = null;
 let substitutions = [];
@@ -462,7 +462,7 @@ function showPage(name) {
     select:    ['🏆 他校試合記録','試合情報とメンバーを入力'],
     starters:  ['🎽 スタメン振り分け','内野5名・外野3名を選ぼう'],
     match:     [(halfNum === 1 ? '⚽ 前半' : '⚽ 後半') + ` vs ${opponent || '相手チーム'}`,'退場した子をタップ'],
-    halftime:  ['⏸ 休憩 (1分)','メンバーチェンジは1回まで'],
+    halftime:  ['⏸ 休憩','メンバーチェンジは何度でもOK'],
     result:    ['🏁 試合終了','結果とスタッツを確認']
   };
   const h = headers[name] || headers.select;
@@ -936,7 +936,6 @@ function renderSubstitution() {
     const tag = roles[name] === 'in' ? '<span class="sub-role-mini in">内</span>' : '<span class="sub-role-mini out">外</span>';
     i.innerHTML = firstName(name) + ' ' + tag;
     i.onclick = () => {
-      if (subRemaining <= 0) return;
       subSelectedPlaying = subSelectedPlaying === name ? null : name;
       renderSubSelection();
     };
@@ -948,7 +947,6 @@ function renderSubstitution() {
     i.className = 'sub-item';
     i.innerHTML = firstName(name) + ' <span class="sub-role-mini" style="background:#e5e7eb;color:#6b7280">控</span>';
     i.onclick = () => {
-      if (subRemaining <= 0) return;
       subSelectedBench = subSelectedBench === name ? null : name;
       renderSubSelection();
     };
@@ -966,21 +964,23 @@ function renderSubSelection() {
   document.querySelectorAll('#sub-bench .sub-item').forEach(it => {
     it.classList.toggle('selected', it.dataset.name === subSelectedBench);
   });
-  el('btn-do-sub').disabled = !(subSelectedPlaying && subSelectedBench && subRemaining > 0);
+  el('btn-do-sub').disabled = !(subSelectedPlaying && subSelectedBench);
 }
 
 function updateSubCounter() {
-  el('sub-counter').textContent = subRemaining > 0 ? `メンバーチェンジ: 残り${subRemaining}回` : 'メンバーチェンジ: 使用済み';
+  el('sub-counter').textContent = subCount > 0
+    ? `これまでの交代: ${subCount}回（無制限）`
+    : 'メンバーチェンジ（人数・回数とも無制限）';
 }
 
 function doSubstitution() {
-  if (!subSelectedPlaying || !subSelectedBench || subRemaining <= 0) return;
+  if (!subSelectedPlaying || !subSelectedBench) return;
   // 出場中の役割を控えに、控えを元の役割に
   const outgoingRole = roles[subSelectedPlaying];
   roles[subSelectedPlaying] = 'bench';
   roles[subSelectedBench] = outgoingRole;
   substitutions.push({ in: subSelectedBench, out: subSelectedPlaying, role: outgoingRole });
-  subRemaining--;
+  subCount++;
   subSelectedPlaying = null;
   subSelectedBench = null;
   toast('交代しました');
@@ -1072,7 +1072,7 @@ function resetAll() {
   halfNum = 1;
   halfState = {};
   halfResults = [null, null];
-  subRemaining = 1;
+  subCount = 0;
   subSelectedPlaying = null;
   subSelectedBench = null;
   substitutions = [];
